@@ -7,12 +7,16 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-public class CompressionUtils {
+public class CompressionService {
 
-    private CompressionUtils() {}
+    private BackupService backupService;
+
+    public CompressionService(BackupService backupService) {
+        this.backupService = backupService;
+    }
 
     // 7z is in the path and accessible
-    public static boolean check() {
+    public boolean check() {
         var ret = false;
         try {
             var result = ShellCommandLauncher.builder().command("7z").parameter("--help").build().launch();
@@ -29,7 +33,7 @@ public class CompressionUtils {
      *                  with the same name, without extension, that must not exist
      * @throws CompressionException If any of the aforementioned conditions is not met
      */
-    public static void decompressComic(File comicFile) throws CompressionException {
+    public void decompressComic(File comicFile) throws CompressionException {
         try {
             assert comicFile != null;
             assert comicFile.exists();
@@ -53,7 +57,7 @@ public class CompressionUtils {
                 parameter("-r").build().launch();
             if (result.getExitCode() != 0) throw new CompressionException(result);
             // If successful, backup the file
-            BackupUtils.backupFile(comicFile);
+            backupService.backupFile(comicFile);
         } catch (IOException | ShellException | AssertionError e) {
             throw new CompressionException(e);
         }

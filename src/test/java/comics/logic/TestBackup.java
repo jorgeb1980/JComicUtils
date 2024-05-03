@@ -25,7 +25,7 @@ public class TestBackup {
                 copyResource("/compressed/test.cbz", targetFile);
                 assertTrue(targetFile.exists());
                 var originalHash = md5(targetFile);
-                BackupUtils.backupFile(targetFile);
+                new BackupService(directory).backupFile(targetFile);
                 assertFalse(targetFile.exists());
                 var today = today();
                 var backupFile = new File(directory, String.format(".comicutils/%s/test.cbz", today));

@@ -1,7 +1,5 @@
 package comics.logic;
 
-import org.mockito.MockSettings;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,20 +13,13 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mockStatic;
 
 public class TestUtils {
 
     public static void runTest(RunnableInTempDirectory action) throws Exception {
         File directory = null;
-        try (var mocked = mockStatic(BackupUtils.class)) {
+        try {
             directory = Files.createTempDirectory("tmp").toFile();
-            // Make it sure it does not use $HOME/.comicutils
-            // Mock 1 method, but always remember to tell mockito to use the real version of the rest
-            mocked.when(BackupUtils::backupDirectory).thenReturn(new File(directory, ".comicutils"));
-            mocked.when(() -> BackupUtils.backupFile(any())).thenCallRealMethod();
-            mocked.when(() -> BackupUtils.calculatePath(any(), any())).thenCallRealMethod();
             // Run everything inside the temporary directory
             action.run(directory);
         } finally {

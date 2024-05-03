@@ -5,8 +5,6 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.nio.file.Files;
 
-import static comics.logic.CompressionUtils.check;
-import static comics.logic.CompressionUtils.decompressComic;
 import static comics.logic.TestUtils.copyResource;
 import static comics.logic.TestUtils.md5;
 import static comics.logic.TestUtils.runTest;
@@ -22,7 +20,7 @@ public class TestCompression {
 
     @Test
     public void is7zAvailable() {
-        assertTrue(check());
+        assertTrue(new CompressionService(new BackupService()).check());
     }
 
     @Test
@@ -41,7 +39,8 @@ public class TestCompression {
                 var comicFile = new File(directory, "test." + extension);
                 copyResource("/compressed/test." + extension, comicFile);
                 var originalMd5 = md5(comicFile);
-                decompressComic(comicFile);
+                var compressionService = new CompressionService(new BackupService(directory));
+                compressionService.decompressComic(comicFile);
                 // Check correction of target
                 var targetDirectory = new File(directory, "test");
                 assertTrue(targetDirectory.exists());
@@ -70,6 +69,7 @@ public class TestCompression {
     public void testExistingDirectory() {
         try {
             runTest((File directory) -> {
+                var compressionService = new CompressionService(new BackupService(directory));
                 var targetFile = new File(directory, "test.cbr");
                 copyResource("/compressed/test.cbr", targetFile);
                 var obstacle = new File(directory, "test");
@@ -78,7 +78,7 @@ public class TestCompression {
                 assertTrue(obstacle.exists());
                 assertTrue(obstacle.isDirectory());
                 // Try to decompress into an existing directory
-                assertThrowsExactly(CompressionException.class, () -> CompressionUtils.decompressComic(targetFile));
+                assertThrowsExactly(CompressionException.class, () -> compressionService.decompressComic(targetFile));
                 // We should have not moved the file into a backup directory
                 assertTrue(targetFile.exists());
             });
