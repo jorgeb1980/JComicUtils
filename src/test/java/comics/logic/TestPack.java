@@ -18,7 +18,8 @@ public class TestPack {
     @Test
     public void testPackNoExclusions() {
         runTest((File directory) -> {
-            var childDirectory = new File(directory, "some_comic");
+            final var fileName = "some comic";
+            var childDirectory = new File(directory, fileName);
             childDirectory.mkdirs();
             // Populate the directory
             for (var s: Arrays.asList(
@@ -37,7 +38,7 @@ public class TestPack {
             }
             var compressionService = new CompressionService(new BackupService(directory));
             compressionService.compressComic(childDirectory);
-            var comicFile = new File(directory, "some_comic.cbz");
+            var comicFile = new File(directory, fileName + ".cbz");
             assertTrue(comicFile.exists());
             assertFalse(childDirectory.exists());
             // Extract and check
