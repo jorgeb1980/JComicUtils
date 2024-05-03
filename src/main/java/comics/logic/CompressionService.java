@@ -9,7 +9,7 @@ import java.nio.file.Files;
 
 public class CompressionService {
 
-    private BackupService backupService;
+    private final BackupService backupService;
 
     public CompressionService(BackupService backupService) {
         this.backupService = backupService;
@@ -61,5 +61,33 @@ public class CompressionService {
         } catch (IOException | ShellException | AssertionError e) {
             throw new CompressionException(e);
         }
+    }
+
+    /**
+     * Creates a zip file on an existing directory, excluding the instructed file extensions
+     * @param directory Base directory whose contents will appear in the comic
+     * @param exclusions Extensions of files forbidden in the final comic
+     * @throws CompressionException If any pre-condition is not met or there is any failure in the I/O operation
+     */
+    public void compressComic(File directory, String... exclusions) throws CompressionException {
+        try {
+            assert directory != null;
+            assert directory.exists();
+            assert !Files.isSymbolicLink(directory.toPath());
+            assert directory.isDirectory();
+
+            var targetFile = new File(directory.getParentFile(), directory.getName() + ".cbz");
+            var result = ShellCommandLauncher.builder().
+                cwd(directory).
+                command("7z").
+                parameter("a").
+                parameter("-m0=Deflate").
+                parameter("-tzip").
+                parameter(targetFile.getAbsolutePath()).
+                parameter("*").build().launch();
+            if (result.getExitCode() != 0) throw new CompressionException(result);
+            // Zip file generated successfully - remove the original directory
+            FileSystemUtils.removeDirectory(directory);
+        } catch (ShellException | AssertionError | IOException ioe) { throw new CompressionException(ioe); }
     }
 }

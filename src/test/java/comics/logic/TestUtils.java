@@ -3,11 +3,9 @@ package comics.logic;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
-import java.util.Comparator;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -16,18 +14,21 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class TestUtils {
 
-    public static void runTest(RunnableInTempDirectory action) throws Exception {
+    public static void runTest(RunnableInTempDirectory action) {
         File directory = null;
         try {
             directory = Files.createTempDirectory("tmp").toFile();
             // Run everything inside the temporary directory
             action.run(directory);
-        } finally {
-            // Delete recursively
-            Files.walk(directory.toPath())
-                .sorted(Comparator.reverseOrder())
-                .map(Path::toFile)
-                .forEach(File::delete);
+        } catch (Exception e) { fail(e); }
+        finally {
+            try {
+                // Delete recursively
+                if (directory != null) FileSystemUtils.removeDirectory(directory);
+            } catch (IOException ioe) {
+                // Fail too if cleanup was not possible for whatever reason
+                fail(ioe);
+            }
         }
     }
 
