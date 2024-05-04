@@ -28,6 +28,9 @@ public class GenericFileListCommand {
         String caption,
         Path cwd
     ) {
+        assert cwd != null : "Please run the command on a non-null directory";
+        assert cwd.toFile().isDirectory() : "Please run the command on a directory";
+
         var counter = new AtomicInteger(0);
         var errors = new Hashtable<File, Exception>();
         var entries = selector.filter(cwd.toFile());

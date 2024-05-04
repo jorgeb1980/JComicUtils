@@ -18,16 +18,21 @@ public class UnpackCommand {
             System.err.println("Compression engine is not ready!");
             return -1;
         } else {
-            return new GenericFileListCommand().execute(
-                (File directory) -> Arrays.stream(directory.listFiles()).filter(
-                    f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("cbz") || f.getName().toLowerCase().endsWith("cbr"))
-                ).toList(),
-                (File entry) -> {
-                    compressionService.decompressComic(entry);
-                },
-                "Unpacking comics..",
-                cwd
-            );
+            try {
+                return new GenericFileListCommand().execute(
+                    (File directory) -> Arrays.stream(directory.listFiles()).filter(
+                        f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("cbz") || f.getName().toLowerCase().endsWith("cbr"))
+                    ).toList(),
+                    (File entry) -> {
+                        compressionService.decompressComic(entry);
+                    },
+                    "Unpacking comics..",
+                    cwd
+                );
+            } catch (Throwable e) {
+                System.out.println(e.getMessage());
+                return -1;
+            }
         }
     }
 }

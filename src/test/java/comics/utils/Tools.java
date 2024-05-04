@@ -4,8 +4,10 @@ import me.tongfei.progressbar.ProgressBar;
 import me.tongfei.progressbar.ProgressBarBuilder;
 import org.mockito.Mockito;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
@@ -24,6 +26,20 @@ public class Tools {
     private final static AtomicInteger testCounter = new AtomicInteger(1);
 
     public enum TestLevel { SERVICE, COMMAND; }
+
+    public static String captureStdOutput(Runnable action) {
+        final var myOut = new ByteArrayOutputStream();
+        final PrintStream originalOut = System.out;
+        System.setOut(new PrintStream(myOut));
+        String standardOutput = "";
+        try {
+            action.run();
+        } finally {
+            standardOutput = myOut.toString();
+            System.setOut(originalOut);
+        }
+        return standardOutput;
+    }
 
     public static void runTest(RunnableInTempDirectory action) {
         File directory = null;

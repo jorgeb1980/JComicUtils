@@ -33,17 +33,17 @@ public class CompressionService {
      */
     public void decompressComic(File comicFile) throws CompressionException {
         try {
-            assert comicFile != null;
-            assert comicFile.exists();
-            assert !comicFile.isDirectory();
-            assert !Files.isSymbolicLink(comicFile.toPath());
+            assert comicFile != null : "Please specify a non-null file";
+            assert comicFile.exists() : "Please specify an existing file";
+            assert !comicFile.isDirectory() : String.format("Cannot decompress %s - it is a directory", comicFile);
+            assert !Files.isSymbolicLink(comicFile.toPath()) : String.format("Cannot decompress %s - it is a symlink", comicFile);
 
             var targetDirectory = new File(
                 comicFile.getParentFile(),
                 // Remove extension
                 comicFile.getName().substring(0, comicFile.getName().lastIndexOf('.'))
             );
-            assert !targetDirectory.exists();
+            assert !targetDirectory.exists() : String.format("Cannot decompress %s - there is something in the way", comicFile);;
 
             var result = ShellCommandLauncher.builder().
                 cwd(comicFile.getParentFile()).
