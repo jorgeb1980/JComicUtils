@@ -1,14 +1,15 @@
 package comics.logic;
 
+import comics.utils.BackupService;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Files;
 
-import static comics.logic.TestUtils.copyResource;
-import static comics.logic.TestUtils.md5;
-import static comics.logic.TestUtils.runTest;
-import static comics.logic.TestUtils.today;
+import static comics.utils.TestUtils.copyResource;
+import static comics.utils.TestUtils.md5;
+import static comics.utils.TestUtils.runTest;
+import static comics.utils.TestUtils.today;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -19,7 +20,7 @@ public class TestUnpack {
 
     @Test
     public void is7zAvailable() {
-        assertTrue(new CompressionService(new BackupService()).check());
+        assertTrue(new CompressionService().check());
     }
 
     @Test
@@ -37,7 +38,7 @@ public class TestUnpack {
             var comicFile = new File(directory, "test." + extension);
             copyResource("/compressed/test." + extension, comicFile);
             var originalMd5 = md5(comicFile);
-            var compressionService = new CompressionService(new BackupService(directory));
+            var compressionService = new CompressionService();
             compressionService.decompressComic(comicFile);
             // Check correction of target
             var targetDirectory = new File(directory, "test");
@@ -72,7 +73,7 @@ public class TestUnpack {
     @Test
     public void testExistingDirectory() {
         runTest((File directory) -> {
-            var compressionService = new CompressionService(new BackupService(directory));
+            var compressionService = new CompressionService();
             var targetFile = new File(directory, "test.cbr");
             copyResource("/compressed/test.cbr", targetFile);
             var obstacle = new File(directory, "test");

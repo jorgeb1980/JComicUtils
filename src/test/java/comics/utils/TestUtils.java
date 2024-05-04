@@ -1,4 +1,8 @@
-package comics.logic;
+package comics.utils;
+
+import me.tongfei.progressbar.ProgressBar;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,17 +11,31 @@ import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
 public class TestUtils {
 
+    private final static AtomicInteger testCounter = new AtomicInteger(1);
+
+    public enum TestLevel { SERVICE, COMMAND; }
+
     public static void runTest(RunnableInTempDirectory action) {
         File directory = null;
-        try {
-            directory = Files.createTempDirectory("tmp").toFile();
+        try (var backupMock = Mockito.mockStatic(BackupService.class);
+             var progressBarMock = Mockito.mockStatic(ProgressBar.class)) {
+            directory = Files.createTempDirectory("tmp" + testCounter.addAndGet(1)).toFile();
+            //final ArgumentCaptor<Iterable> iterableCaptor = ArgumentCaptor.forClass(Iterable.class);
+            backupMock.when(BackupService::get).thenReturn(new BackupService(directory));
+            progressBarMock.when(
+                () -> ProgressBar.wrap(any(Iterable.class), anyString())
+            //).thenReturn(iterableCaptor.getValue());
+            ).thenAnswer(input -> input.getArgument(0));
             // Run everything inside the temporary directory
             action.run(directory);
         } catch (Exception e) { fail(e); }
@@ -57,4 +75,5 @@ public class TestUtils {
             Files.copy(is, toFile.toPath());
         } catch (IOException ioe) { fail(ioe); }
     }
+
 }

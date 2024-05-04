@@ -57,6 +57,11 @@
         </pluginManagement>
     </build>
     <dependencies>
+        <dependency>
+            <groupId>me.tongfei</groupId>
+            <artifactId>progressbar</artifactId>
+            <version>0.10.1</version>
+        </dependency>
         <!-- https://github.com/jorgeb1980/lib-cli-base -->
         <dependency>
             <groupId>cli-library</groupId>
@@ -69,10 +74,17 @@
             <artifactId>command-launcher</artifactId>
             <version>${shell.commands.library.version}</version>
         </dependency>
+        <!-- Test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.11.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

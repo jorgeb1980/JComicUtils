@@ -1,4 +1,4 @@
-package comics.logic;
+package comics.utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +12,11 @@ public class BackupService {
 
     private File baseDir = new File(System.getProperty("user.home"));
 
-    public BackupService() { }
+    public static BackupService get() {
+        return new BackupService();
+    }
+
+    private BackupService() { }
 
     BackupService(File baseDir) {
         this.baseDir = baseDir;

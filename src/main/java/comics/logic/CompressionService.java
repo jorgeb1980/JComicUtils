@@ -1,5 +1,7 @@
 package comics.logic;
 
+import comics.utils.BackupService;
+import comics.utils.FileSystemUtils;
 import shell.ShellCommandLauncher;
 import shell.ShellException;
 
@@ -9,11 +11,7 @@ import java.nio.file.Files;
 
 public class CompressionService {
 
-    private final BackupService backupService;
-
-    public CompressionService(BackupService backupService) {
-        this.backupService = backupService;
-    }
+    public CompressionService() { }
 
     // 7z is in the path and accessible
     public boolean check() {
@@ -57,7 +55,7 @@ public class CompressionService {
                 parameter("-r").build().launch();
             if (result.getExitCode() != 0) throw new CompressionException(result);
             // If successful, backup the file
-            backupService.backupFile(comicFile);
+            BackupService.get().backupFile(comicFile);
         } catch (IOException | ShellException | AssertionError e) {
             throw new CompressionException(e);
         }
@@ -77,13 +75,15 @@ public class CompressionService {
             assert directory.isDirectory();
 
             var targetFile = new File(directory.getParentFile(), directory.getName() + ".cbz");
-            var result = ShellCommandLauncher.builder().
+            var builder = ShellCommandLauncher.builder().
                 cwd(directory).
                 command("7z").
                 parameter("a").
                 parameter("-m0=Deflate").
-                parameter("-tzip").
-                parameter(targetFile.getAbsolutePath()).
+                parameter("-tzip");
+            if (exclusions != null)
+                for (var exclusion: exclusions) builder.parameter("-xr!*." + exclusion);
+            var result = builder.parameter(targetFile.getAbsolutePath()).
                 parameter("*").build().launch();
             if (result.getExitCode() != 0) throw new CompressionException(result);
             // Zip file generated successfully - remove the original directory

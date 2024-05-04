@@ -1,4 +1,4 @@
-package comics.logic;
+package comics.utils;
 
 import java.io.File;
 import java.io.IOException;
