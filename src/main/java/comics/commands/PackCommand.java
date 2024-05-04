@@ -6,14 +6,13 @@ import cli.annotations.Run;
 import comics.logic.CompressionException;
 import comics.logic.CompressionService;
 import me.tongfei.progressbar.ProgressBar;
-import me.tongfei.progressbar.ProgressBarBuilder;
-import me.tongfei.progressbar.ProgressBarStyle;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static comics.utils.Utils.pgBuilder;
 
@@ -31,23 +30,23 @@ public class PackCommand {
             System.err.println("Compression engine is not ready!");
             return -1;
         } else {
-            var comicsCounter = 0;
-            var errors = new HashMap<File, CompressionException>();
+            var comicsCounter = new AtomicInteger(0);
+            var errors = new Hashtable<File, CompressionException>();
             var childrenDirectories = Arrays.stream(cwd.toFile().listFiles()).filter(f -> f.isDirectory()).toList();
-            for (var dir: ProgressBar.wrap(childrenDirectories, pgBuilder("Packing comics..."))) {
+            ProgressBar.wrap(childrenDirectories.parallelStream(), pgBuilder("Packing comics...")).forEach(dir -> {
                 try {
                     var exclusions = new LinkedList<String>();
                     if (!all) {
                         exclusions.add("txt");
                     }
                     compressionService.compressComic(dir, exclusions.toArray(new String[0]));
-                    comicsCounter++;
+                    comicsCounter.incrementAndGet();
                 } catch (CompressionException ce) {
                     errors.put(dir, ce);
                 }
-            }
+            });
             // Report
-            System.out.printf("Packed %d comics%n", comicsCounter);
+            System.out.printf("Packed %d comics%n", comicsCounter.get());
             if (!errors.isEmpty())
                 System.out.printf(
                     "Could not create comics for the following directories:%n%s",

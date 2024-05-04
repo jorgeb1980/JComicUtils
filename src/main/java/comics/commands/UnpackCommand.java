@@ -9,7 +9,8 @@ import me.tongfei.progressbar.ProgressBar;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static comics.utils.Utils.pgBuilder;
 
@@ -23,21 +24,21 @@ public class UnpackCommand {
             System.err.println("Compression engine is not ready!");
             return -1;
         } else {
-            var comicsCounter = 0;
+            var comicsCounter = new AtomicInteger(0);
             var comics = Arrays.stream(cwd.toFile().listFiles()).filter(
                 f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("cbz") || f.getName().toLowerCase().endsWith("cbr"))
             ).toList();
-            var errors = new HashMap<File, CompressionException>();
-            for (var file: ProgressBar.wrap(comics, pgBuilder("Unpacking comics..."))) {
+            var errors = new Hashtable<File, CompressionException>();
+            ProgressBar.wrap(comics.parallelStream(), pgBuilder("Unpacking comics...")).forEach(file -> {
                 try {
                     compressionService.decompressComic(file);
-                    comicsCounter++;
+                    comicsCounter.incrementAndGet();
                 } catch (CompressionException ce) {
                     errors.put(file, ce);
                 }
-            }
+            });
             // Report
-            System.out.printf("Unpacked %d comics%n", comicsCounter);
+            System.out.printf("Unpacked %d comics%n", comicsCounter.get());
             if (!errors.isEmpty())
                 System.out.printf(
                     "Could not create comics for the following directories:%n%s",

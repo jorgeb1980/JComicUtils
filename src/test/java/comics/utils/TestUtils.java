@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,7 +33,7 @@ public class TestUtils {
             backupMock.when(BackupService::get).thenReturn(new BackupService(directory));
             // Mock progress bar too - has some issues when executing under maven
             progressBarMock.when(
-                () -> ProgressBar.wrap(any(Iterable.class), any(ProgressBarBuilder.class))
+                () -> ProgressBar.wrap(any(Stream.class), any(ProgressBarBuilder.class))
             ).thenAnswer(input -> input.getArgument(0));
             // Run everything inside the temporary directory
             action.run(directory);
