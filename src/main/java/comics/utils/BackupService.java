@@ -7,6 +7,8 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 // This class manages a backup of discarded files inside $HOME/.comicutils
 public class BackupService {
 
@@ -52,6 +54,6 @@ public class BackupService {
         if (!parentDir.exists()) {
             parentDir.mkdirs();
         }
-        Files.move(f.toPath(), calculatePath(toDir, f));
+        Files.move(f.toPath(), calculatePath(toDir, f), REPLACE_EXISTING);
     }
 }

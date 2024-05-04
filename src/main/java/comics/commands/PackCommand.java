@@ -6,12 +6,16 @@ import cli.annotations.Run;
 import comics.logic.CompressionException;
 import comics.logic.CompressionService;
 import me.tongfei.progressbar.ProgressBar;
+import me.tongfei.progressbar.ProgressBarBuilder;
+import me.tongfei.progressbar.ProgressBarStyle;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+
+import static comics.utils.Utils.pgBuilder;
 
 @Command(command="pack", description="Packs every sub-directory under CWD into a .cbz file")
 public class PackCommand {
@@ -30,7 +34,7 @@ public class PackCommand {
             var comicsCounter = 0;
             var errors = new HashMap<File, CompressionException>();
             var childrenDirectories = Arrays.stream(cwd.toFile().listFiles()).filter(f -> f.isDirectory()).toList();
-            for (var dir: ProgressBar.wrap(childrenDirectories, "Creating comics...")) {
+            for (var dir: ProgressBar.wrap(childrenDirectories, pgBuilder("Packing comics..."))) {
                 try {
                     var exclusions = new LinkedList<String>();
                     if (!all) {

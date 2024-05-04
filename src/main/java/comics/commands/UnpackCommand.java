@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import static comics.utils.Utils.pgBuilder;
+
 @Command(command="unpack", description="Unpacks every cbz/cbr file under CWD and repacks them into .cbz files")
 public class UnpackCommand {
 
@@ -26,7 +28,7 @@ public class UnpackCommand {
                 f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("cbz") || f.getName().toLowerCase().endsWith("cbr"))
             ).toList();
             var errors = new HashMap<File, CompressionException>();
-            for (var file: ProgressBar.wrap(comics, "Unpacking comics...")) {
+            for (var file: ProgressBar.wrap(comics, pgBuilder("Unpacking comics..."))) {
                 try {
                     compressionService.decompressComic(file);
                     comicsCounter++;

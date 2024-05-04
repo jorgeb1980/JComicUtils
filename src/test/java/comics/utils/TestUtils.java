@@ -1,7 +1,7 @@
 package comics.utils;
 
 import me.tongfei.progressbar.ProgressBar;
-import org.mockito.ArgumentCaptor;
+import me.tongfei.progressbar.ProgressBarBuilder;
 import org.mockito.Mockito;
 
 import java.io.File;
@@ -17,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 
 public class TestUtils {
 
@@ -33,7 +32,7 @@ public class TestUtils {
             backupMock.when(BackupService::get).thenReturn(new BackupService(directory));
             // Mock progress bar too - has some issues when executing under maven
             progressBarMock.when(
-                () -> ProgressBar.wrap(any(Iterable.class), anyString())
+                () -> ProgressBar.wrap(any(Iterable.class), any(ProgressBarBuilder.class))
             ).thenAnswer(input -> input.getArgument(0));
             // Run everything inside the temporary directory
             action.run(directory);
@@ -41,7 +40,7 @@ public class TestUtils {
         finally {
             try {
                 // Delete recursively
-                if (directory != null) FileSystemUtils.removeDirectory(directory);
+                if (directory != null) Utils.removeDirectory(directory);
             } catch (IOException ioe) {
                 // Fail too if cleanup was not possible for whatever reason
                 fail(ioe);

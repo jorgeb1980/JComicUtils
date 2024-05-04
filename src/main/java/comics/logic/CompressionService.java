@@ -1,7 +1,7 @@
 package comics.logic;
 
 import comics.utils.BackupService;
-import comics.utils.FileSystemUtils;
+import comics.utils.Utils;
 import shell.ShellCommandLauncher;
 import shell.ShellException;
 
@@ -87,7 +87,7 @@ public class CompressionService {
                 parameter("*").build().launch();
             if (result.getExitCode() != 0) throw new CompressionException(result);
             // Zip file generated successfully - remove the original directory
-            FileSystemUtils.removeDirectory(directory);
+            Utils.removeDirectory(directory);
         } catch (ShellException | AssertionError | IOException ioe) { throw new CompressionException(ioe); }
     }
 }
