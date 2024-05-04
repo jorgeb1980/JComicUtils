@@ -4,17 +4,25 @@ import me.tongfei.progressbar.ProgressBar;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static comics.utils.Utils.pgBuilder;
 
 public class GenericFileListCommand {
 
+    private Path cwd;
+    private String caption;
+
+    public GenericFileListCommand(Path cwd, String caption) {
+        this.cwd = cwd;
+        this.caption = caption;
+    }
+
     @FunctionalInterface
     interface FileSelector {
-        List<File> filter(File directory);
+        boolean filter(File file);
     }
 
     @FunctionalInterface
@@ -24,16 +32,14 @@ public class GenericFileListCommand {
 
     int execute(
         FileSelector selector,
-        CommandProcessor processor,
-        String caption,
-        Path cwd
+        CommandProcessor processor
     ) {
         assert cwd != null : "Please run the command on a non-null directory";
         assert cwd.toFile().isDirectory() : "Please run the command on a directory";
 
         var counter = new AtomicInteger(0);
         var errors = new Hashtable<File, Exception>();
-        var entries = selector.filter(cwd.toFile());
+        var entries = Arrays.stream(cwd.toFile().listFiles()).filter(f -> selector.filter(f)).toList();
         ProgressBar.wrap(entries.parallelStream(), pgBuilder(caption)).forEach(entry -> {
             try {
                 processor.processCommand(entry);

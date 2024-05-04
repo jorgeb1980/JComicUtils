@@ -4,9 +4,7 @@ import cli.annotations.Command;
 import cli.annotations.Run;
 import comics.logic.CompressionService;
 
-import java.io.File;
 import java.nio.file.Path;
-import java.util.Arrays;
 
 @Command(command="unpack", description="Unpacks every cbz/cbr file under CWD and repacks them into .cbz files")
 public class UnpackCommand {
@@ -19,15 +17,9 @@ public class UnpackCommand {
             return -1;
         } else {
             try {
-                return new GenericFileListCommand().execute(
-                    (File directory) -> Arrays.stream(directory.listFiles()).filter(
-                        f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("cbz") || f.getName().toLowerCase().endsWith("cbr"))
-                    ).toList(),
-                    (File entry) -> {
-                        compressionService.decompressComic(entry);
-                    },
-                    "Unpacking comics..",
-                    cwd
+                return new GenericFileListCommand(cwd, "Unpacking comics...").execute(
+                    f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("cbz") || f.getName().toLowerCase().endsWith("cbr")),
+                    f -> compressionService.decompressComic(f)
                 );
             } catch (Throwable e) {
                 System.out.println(e.getMessage());
