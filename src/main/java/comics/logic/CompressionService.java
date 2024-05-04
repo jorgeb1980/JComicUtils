@@ -79,7 +79,6 @@ public class CompressionService {
                 cwd(directory).
                 command("7z").
                 parameter("a").
-                parameter("-m0=Deflate").
                 parameter("-tzip");
             if (exclusions != null)
                 for (var exclusion: exclusions) builder.parameter("-xr!*." + exclusion);
