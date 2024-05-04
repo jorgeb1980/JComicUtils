@@ -55,6 +55,11 @@ public class NameConverter {
             name = checkForHyphen(name, "(\\d+ de \\d+)$");
             name = checkForHyphen(name, "(\\d+ of \\d+)$");
         } else {
+            // Remove '#' in the numbers
+            var numberSignMatcher = compile("#(\\d+)$").matcher(name);
+            if (numberSignMatcher.find()) {
+                name = numberSignMatcher.replaceFirst(numberSignMatcher.group(1));
+            }
             // make it sure there is a ' - ' in front of the number
             name = checkForHyphen(name, "(\\d+)$");
         }

@@ -26,7 +26,7 @@ public class TestNameConverter {
     }
 
     @Test
-    public void testCollections() {
+    public void testFileNumbers() {
         testImplementation(
             Map.of(
                 "Some comic 1 dE 54",
@@ -34,7 +34,9 @@ public class TestNameConverter {
                 "Some cOMIC - 34 of 545",
                     "Some Comic - 34 of 545",
                 "Some CoMIC 35 de 435  ",
-                    "Some Comic - 35 de 435"
+                    "Some Comic - 35 de 435",
+                "Some COmic #2345",
+                    "Some Comic - 2345"
             )
         );
     }

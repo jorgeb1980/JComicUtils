@@ -62,7 +62,8 @@ public class CompressionService {
     }
 
     /**
-     * Creates a zip file on an existing directory, excluding the instructed file extensions
+     * Creates a zip file on an existing directory, excluding the instructed file extensions.  The zip file created
+     * has a normalized file name.
      * @param directory Base directory whose contents will appear in the comic
      * @param exclusions Extensions of files forbidden in the final comic
      * @throws CompressionException If any pre-condition is not met or there is any failure in the I/O operation
@@ -74,7 +75,10 @@ public class CompressionService {
             assert !Files.isSymbolicLink(directory.toPath());
             assert directory.isDirectory();
 
-            var targetFile = new File(directory.getParentFile(), directory.getName() + ".cbz");
+            var targetFile = new File(
+                directory.getParentFile(),
+                new NameConverter().normalizeFileName(directory.getName() + ".cbz")
+            );
             var builder = ShellCommandLauncher.builder().
                 cwd(directory).
                 command("7z").
