@@ -1,7 +1,7 @@
 package comics.logic;
 
 import comics.commands.PackCommand;
-import comics.utils.TestUtils.TestLevel;
+import comics.utils.Tools.TestLevel;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -9,11 +9,11 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import static comics.utils.TestUtils.TestLevel.COMMAND;
-import static comics.utils.TestUtils.TestLevel.SERVICE;
-import static comics.utils.TestUtils.copyResource;
-import static comics.utils.TestUtils.md5;
-import static comics.utils.TestUtils.runTest;
+import static comics.utils.Tools.TestLevel.COMMAND;
+import static comics.utils.Tools.TestLevel.SERVICE;
+import static comics.utils.Tools.copyResource;
+import static comics.utils.Tools.md5;
+import static comics.utils.Tools.runTest;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

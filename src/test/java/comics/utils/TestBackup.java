@@ -7,8 +7,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import static comics.utils.TestUtils.copyResource;
-import static comics.utils.TestUtils.runTest;
+import static comics.utils.Tools.copyResource;
+import static comics.utils.Tools.runTest;
 import static java.util.List.of;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,15 +27,15 @@ public class TestBackup {
                     var targetFile = new File(directory, file);
                     copyResource("/compressed/" + file, targetFile);
                     assertTrue(targetFile.exists());
-                    var originalHashCbz = TestUtils.md5(targetFile);
+                    var originalHashCbz = Tools.md5(targetFile);
                     try { new BackupService(directory).backupFile(targetFile); } catch (IOException ioe) { fail(ioe); }
                     assertFalse(targetFile.exists());
-                    var today = TestUtils.today();
+                    var today = Tools.today();
                     var backupFile = new File(directory, String.format(".comicutils/%s/" + file, today));
                     assertTrue(backupFile.exists());
                     assertFalse(backupFile.isDirectory());
                     assertFalse(Files.isSymbolicLink(backupFile.toPath()));
-                    assertEquals(originalHashCbz, TestUtils.md5(backupFile));
+                    assertEquals(originalHashCbz, Tools.md5(backupFile));
                 });
             });
         } catch (Exception e) {
