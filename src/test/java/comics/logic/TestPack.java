@@ -51,15 +51,16 @@ public class TestPack {
                 var ret = packCommand.run(directory.toPath());
                 assertEquals(0, ret);
             }
-            var comicFile = new File(directory, fileName + ".cbz");
+            var comicFile = new File(directory, new NameConverter().normalizeFileName(fileName + ".cbz"));
             assertTrue(comicFile.exists());
             assertFalse(childDirectory.exists());
             // Extract and check
             new CompressionService().decompressComic(comicFile);
+            File newChildDirectory = new File(directory, new NameConverter().normalizeFileName(fileName));
             assertFalse(comicFile.exists());
-            assertTrue(childDirectory.exists());
-            assertEquals(originalData.keySet().size(), childDirectory.listFiles().length);
-            for (File f: childDirectory.listFiles()) {
+            assertTrue(newChildDirectory.exists());
+            assertEquals(originalData.keySet().size(), newChildDirectory.listFiles().length);
+            for (File f: newChildDirectory.listFiles()) {
                 assertEquals(originalData.get(f.getName()), md5(f));
             }
         });
@@ -95,19 +96,20 @@ public class TestPack {
                 var ret = packCommand.run(directory.toPath());
                 assertEquals(0, ret);
             }
-            var comicFile = new File(directory, fileName + ".cbz");
+            var comicFile = new File(directory, new NameConverter().normalizeFileName(fileName+ ".cbz"));
             assertTrue(comicFile.exists());
-            assertFalse(childDirectory.exists());
+            File newChildDirectory = new File(directory, new NameConverter().normalizeFileName(fileName));
+            assertFalse(newChildDirectory.exists());
             // Extract and check
             new CompressionService().decompressComic(comicFile);
             assertFalse(comicFile.exists());
-            assertTrue(childDirectory.exists());
+            assertTrue(newChildDirectory.exists());
             assertEquals(
                 originalData.keySet().stream().filter(s -> !s.endsWith("txt")).toList().size(),
-                childDirectory.listFiles().length
+                newChildDirectory.listFiles().length
             );
-            assertTrue(Arrays.stream(childDirectory.listFiles()).filter(s -> s.getName().endsWith("txt")).toList().isEmpty());
-            for (File f: childDirectory.listFiles()) {
+            assertTrue(Arrays.stream(newChildDirectory.listFiles()).filter(s -> s.getName().endsWith("txt")).toList().isEmpty());
+            for (File f: newChildDirectory.listFiles()) {
                 assertEquals(originalData.get(f.getName()), md5(f));
             }
         });
@@ -143,7 +145,7 @@ public class TestPack {
                 var ret = packCommand.run(directory.toPath());
                 assertEquals(0, ret);
             }
-            var comicFile = new File(directory, fileName + ".cbz");
+            var comicFile = new File(directory, new NameConverter().normalizeFileName(fileName + ".cbz"));
             assertTrue(comicFile.exists());
             assertFalse(childDirectory.exists());
             // Extract and check
