@@ -1,4 +1,4 @@
-package comics.logic;
+package comics.utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,12 +7,18 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 // This class manages a backup of discarded files inside $HOME/.comicutils
 public class BackupService {
 
     private File baseDir = new File(System.getProperty("user.home"));
 
-    public BackupService() { }
+    public static BackupService get() {
+        return new BackupService();
+    }
+
+    private BackupService() { }
 
     BackupService(File baseDir) {
         this.baseDir = baseDir;
@@ -48,6 +54,6 @@ public class BackupService {
         if (!parentDir.exists()) {
             parentDir.mkdirs();
         }
-        Files.move(f.toPath(), calculatePath(toDir, f));
+        Files.move(f.toPath(), calculatePath(toDir, f), REPLACE_EXISTING);
     }
 }
