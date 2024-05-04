@@ -1,11 +1,18 @@
 package comics.logic;
 
+import comics.commands.UnpackCommand;
 import comics.utils.BackupService;
+import comics.utils.TestUtils;
+import comics.utils.TestUtils.TestLevel;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.File;
 import java.nio.file.Files;
 
+import static comics.utils.TestUtils.TestLevel.COMMAND;
+import static comics.utils.TestUtils.TestLevel.SERVICE;
 import static comics.utils.TestUtils.copyResource;
 import static comics.utils.TestUtils.md5;
 import static comics.utils.TestUtils.runTest;
@@ -23,23 +30,31 @@ public class TestUnpack {
         assertTrue(new CompressionService().check());
     }
 
-    @Test
-    public void testUnpackCbz() {
-        testUnpack("cbz");
+    @ParameterizedTest
+    @EnumSource(TestLevel.class)
+    public void testUnpackCbz(TestLevel level) {
+        testUnpack(level, "cbz");
     }
 
-    @Test
-    public void testUnpackCbr() {
-        testUnpack("cbr");
+    @ParameterizedTest
+    @EnumSource(TestLevel.class)
+    public void testUnpackCbr(TestLevel level) {
+        testUnpack(level, "cbr");
     }
 
-    private void testUnpack(String extension) {
+    private void testUnpack(TestLevel level, String extension) {
         runTest((File directory) -> {
             var comicFile = new File(directory, "test." + extension);
             copyResource("/compressed/test." + extension, comicFile);
             var originalMd5 = md5(comicFile);
-            var compressionService = new CompressionService();
-            compressionService.decompressComic(comicFile);
+            if (level == SERVICE) {
+                var compressionService = new CompressionService();
+                compressionService.decompressComic(comicFile);
+            } else if (level == COMMAND) {
+                var unpackCommand = new UnpackCommand();
+                var ret = unpackCommand.run(directory.toPath());
+                assertEquals(0, ret);
+            }
             // Check correction of target
             var targetDirectory = new File(directory, "test");
             assertTrue(targetDirectory.exists());
@@ -73,7 +88,6 @@ public class TestUnpack {
     @Test
     public void testExistingDirectory() {
         runTest((File directory) -> {
-            var compressionService = new CompressionService();
             var targetFile = new File(directory, "test.cbr");
             copyResource("/compressed/test.cbr", targetFile);
             var obstacle = new File(directory, "test");
@@ -81,6 +95,7 @@ public class TestUnpack {
             obstacle.mkdir();
             assertTrue(obstacle.exists());
             assertTrue(obstacle.isDirectory());
+            var compressionService = new CompressionService();
             // Try to decompress into an existing directory
             assertThrowsExactly(CompressionException.class, () -> compressionService.decompressComic(targetFile));
             // We should have not moved the file into a backup directory

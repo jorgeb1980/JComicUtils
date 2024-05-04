@@ -30,11 +30,10 @@ public class TestUtils {
         try (var backupMock = Mockito.mockStatic(BackupService.class);
              var progressBarMock = Mockito.mockStatic(ProgressBar.class)) {
             directory = Files.createTempDirectory("tmp" + testCounter.addAndGet(1)).toFile();
-            //final ArgumentCaptor<Iterable> iterableCaptor = ArgumentCaptor.forClass(Iterable.class);
             backupMock.when(BackupService::get).thenReturn(new BackupService(directory));
+            // Mock progress bar too - has some issues when executing under maven
             progressBarMock.when(
                 () -> ProgressBar.wrap(any(Iterable.class), anyString())
-            //).thenReturn(iterableCaptor.getValue());
             ).thenAnswer(input -> input.getArgument(0));
             // Run everything inside the temporary directory
             action.run(directory);
