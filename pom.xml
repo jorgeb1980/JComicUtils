@@ -92,6 +92,11 @@
         </plugins>
     </reporting>
     <dependencies>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox-app</artifactId>
+            <version>3.0.2</version>
+        </dependency>
         <!-- https://github.com/ctongfei/progressbar -->
         <dependency>
             <groupId>me.tongfei</groupId>
