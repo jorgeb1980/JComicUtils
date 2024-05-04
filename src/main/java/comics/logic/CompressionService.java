@@ -62,8 +62,8 @@ public class CompressionService {
     }
 
     /**
-     * Creates a zip file on an existing directory, excluding the instructed file extensions.  The zip file created
-     * has a normalized file name.
+     * Creates a zip file with the contents of an existing directory, excluding the instructed file extensions.
+     * The zip file created has a normalized file name.
      * @param directory Base directory whose contents will appear in the comic
      * @param exclusions Extensions of files forbidden in the final comic
      * @throws CompressionException If any pre-condition is not met or there is any failure in the I/O operation

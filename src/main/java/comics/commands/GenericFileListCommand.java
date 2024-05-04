@@ -34,31 +34,37 @@ public class GenericFileListCommand {
         FileSelector selector,
         CommandProcessor processor
     ) {
-        assert cwd != null : "Please run the command on a non-null directory";
-        assert cwd.toFile().isDirectory() : "Please run the command on a directory";
+        var ret = 0;
+        try {
+            assert cwd != null : "Please run the command on a non-null directory";
+            assert cwd.toFile().isDirectory() : "Please run the command on a directory";
 
-        var counter = new AtomicInteger(0);
-        var errors = new Hashtable<File, Exception>();
-        var entries = Arrays.stream(cwd.toFile().listFiles()).filter(f -> selector.filter(f)).toList();
-        ProgressBar.wrap(entries.parallelStream(), pgBuilder(caption)).forEach(entry -> {
-            try {
-                processor.processCommand(entry);
-                counter.incrementAndGet();
-            } catch (Exception e) {
-                errors.put(entry, e);
-            }
-        });
-        // Report
-        if (!errors.isEmpty())
-            System.out.printf(
-                "Could not process the following entries:%n%s",
-                String.join(
-                    "\n",
-                    errors.entrySet().stream().map(
-                        e -> String.format("%s - %s", e.getKey().getName(), e.getValue().getMessage())
-                    ).toList()
-                )
-            );
-        return 0;
+            var counter = new AtomicInteger(0);
+            var errors = new Hashtable<File, Exception>();
+            var entries = Arrays.stream(cwd.toFile().listFiles()).filter(f -> selector.filter(f)).toList();
+            ProgressBar.wrap(entries.parallelStream(), pgBuilder(caption)).forEach(entry -> {
+                try {
+                    processor.processCommand(entry);
+                    counter.incrementAndGet();
+                } catch (Exception e) {
+                    errors.put(entry, e);
+                }
+            });
+            // Report
+            if (!errors.isEmpty())
+                System.out.printf(
+                    "Could not process the following entries:%n%s",
+                    String.join(
+                        "\n",
+                        errors.entrySet().stream().map(
+                            e -> String.format("%s - %s", e.getKey().getName(), e.getValue().getMessage())
+                        ).toList()
+                    )
+                );
+        } catch (Throwable e) {
+            System.out.println(e.getMessage());
+            ret = -1;
+        }
+        return ret;
     }
 }

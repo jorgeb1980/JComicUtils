@@ -6,12 +6,11 @@ import cli.annotations.Run;
 import comics.logic.CompressionService;
 
 import java.nio.file.Path;
-import java.util.LinkedList;
 
 @Command(command="pack", description="Packs every sub-directory under CWD into a .cbz file")
 public class PackCommand {
 
-    private static final String[] EXCLUSIONS = new String[] { "txt" };
+    static final String[] DEFAULT_EXCLUSIONS = new String[] { "txt" };
 
     @Parameter(name="a", longName="all", description="If set, the command will include non-image files in the comics")
     public Boolean all = false;
@@ -26,7 +25,7 @@ public class PackCommand {
         } else {
             return new GenericFileListCommand(cwd, "Packing comics...").execute(
                 dir -> dir.isDirectory(),
-                dir -> compressionService.compressComic(dir, all ? null : EXCLUSIONS)
+                dir -> compressionService.compressComic(dir, all ? null : DEFAULT_EXCLUSIONS)
             );
         }
     }

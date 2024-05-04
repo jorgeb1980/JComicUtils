@@ -12,11 +12,10 @@ import java.util.Comparator;
 public class Utils {
 
     public static ProgressBarBuilder pgBuilder(String taskName) {
-        ProgressBarBuilder pgBuilder = new ProgressBarBuilder();
+        var pgBuilder = new ProgressBarBuilder();
         pgBuilder.setTaskName(taskName);
         // Detect if we have or not a TERM variable in order to present a nicer progress bar
-        if (System.getenv("TERM") == null)
-            pgBuilder.setStyle(ProgressBarStyle.ASCII);
+        if (System.getenv("TERM") == null) pgBuilder.setStyle(ProgressBarStyle.ASCII);
         return pgBuilder;
 
     }

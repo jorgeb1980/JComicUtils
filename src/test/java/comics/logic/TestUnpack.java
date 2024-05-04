@@ -7,15 +7,22 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import shell.OSDetection;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.PrintStream;
 import java.nio.file.Files;
 
-import static comics.utils.Tools.*;
 import static comics.utils.Tools.TestLevel.COMMAND;
 import static comics.utils.Tools.TestLevel.SERVICE;
-import static org.junit.jupiter.api.Assertions.*;
+import static comics.utils.Tools.captureStdOutput;
+import static comics.utils.Tools.copyResource;
+import static comics.utils.Tools.md5;
+import static comics.utils.Tools.runTest;
+import static comics.utils.Tools.today;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestUnpack {
 
