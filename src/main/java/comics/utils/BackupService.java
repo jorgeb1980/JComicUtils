@@ -53,5 +53,6 @@ public class BackupService {
             if (parentDir.mkdirs()) logger.log(FINE, String.format("Recreating path to backup directory %s", parentDir));
         }
         Files.move(f.toPath(), calculatePath(toDir, f), REPLACE_EXISTING);
+        logger.log(FINE, String.format("'%s' moved to backup directory '%s'", f, targetPath));
     }
 }
