@@ -10,8 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static comics.commands.Pdf2CbzCommand.DEFAULT_FORMAT;
-import static comics.utils.Tools.copyResource;
-import static comics.utils.Tools.runTest;
+import static comics.utils.Tools.*;
 import static comics.utils.Utils.emptyIfNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -21,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestPdf {
 
     private void checkAllImages(File directory, String format) {
+        assertTrue(directory.exists());
         var newFiles = Arrays.stream(emptyIfNull(directory.listFiles())).map(File::getName).filter(s -> s.endsWith(format)).toList();
         assertEquals(6, newFiles.size());
         var expectedFiles = List.of(
@@ -44,7 +44,7 @@ public class TestPdf {
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(pdf, null));
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(pdf, "trololololo"));
             var dir = new File(sandbox, "childDir");
-            dir.mkdirs();
+            mkdir(dir);
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(dir, "jpg"));
             if (!OSDetection.isWindows()) {
                 var symlink = new File(sandbox, "symlink");
@@ -84,12 +84,11 @@ public class TestPdf {
             var intermediateDirectory = new File(sandbox, "test");
             assertFalse(intermediateDirectory.exists());
             // Result
-            var expectedFile = new File(sandbox, "test.cbz");
+            var expectedFile = new File(sandbox, "Test.cbz");
             assertTrue(expectedFile.exists());
             assertFalse(expectedFile.isDirectory());
             new CompressionService().decompressComic(expectedFile);
-            assertTrue(intermediateDirectory.exists());
-            checkAllImages(intermediateDirectory, DEFAULT_FORMAT);
+            checkAllImages(new File(sandbox, "Test"), DEFAULT_FORMAT);
         });
     }
 
@@ -109,12 +108,11 @@ public class TestPdf {
             var intermediateDirectory = new File(sandbox, "test");
             assertFalse(intermediateDirectory.exists());
             // Result
-            var expectedFile = new File(sandbox, "test.cbz");
+            var expectedFile = new File(sandbox, "Test.cbz");
             assertTrue(expectedFile.exists());
             assertFalse(expectedFile.isDirectory());
             new CompressionService().decompressComic(expectedFile);
-            assertTrue(intermediateDirectory.exists());
-            checkAllImages(intermediateDirectory, format);
+            checkAllImages(new File(sandbox, "Test"), format);
         });
     }
 }
