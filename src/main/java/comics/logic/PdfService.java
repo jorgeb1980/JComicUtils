@@ -77,7 +77,7 @@ public class PdfService {
         var document = Loader.loadPDF(pdf);
         // Dump the images into the parent directory
         var newDirectory = new File(pdf.getParent(), pdf.getName().substring(0, pdf.getName().lastIndexOf('.')));
-        newDirectory.mkdir();
+        if (!newDirectory.mkdir()) throw new IOException(String.format("Unable to create directory %s", newDirectory));
         dumpImagesFromPDF(document, newDirectory, sanitizedFormat);
         /* Images will be like:
             image_1.jpg
@@ -112,8 +112,7 @@ public class PdfService {
 
     private void writeBytes(File directory, byte[] bytes, String fileName) throws IOException {
         var targetFile = new File(directory, fileName);
-        targetFile.createNewFile();
-        Files.write(targetFile.toPath(), bytes);
+        if (targetFile.createNewFile()) Files.write(targetFile.toPath(), bytes);
     }
 
     public static byte[] toByteArray(RenderedImage bi, String format)
