@@ -14,7 +14,9 @@ import static comics.utils.Tools.TestLevel.COMMAND;
 import static comics.utils.Tools.TestLevel.SERVICE;
 import static comics.utils.Tools.captureStdOutput;
 import static comics.utils.Tools.copyResource;
+import static comics.utils.Tools.createNewFile;
 import static comics.utils.Tools.md5;
+import static comics.utils.Tools.mkdir;
 import static comics.utils.Tools.runTest;
 import static comics.utils.Tools.today;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,20 +46,21 @@ public class TestUnpack {
     }
 
     private void testUnpack(TestLevel level, String extension) {
-        runTest((File directory) -> {
-            var comicFile = new File(directory, "test." + extension);
+        runTest((File sandbox) -> {
+            var comicFile = new File(sandbox, "test." + extension);
             copyResource("/compressed/test." + extension, comicFile);
             var originalMd5 = md5(comicFile);
             if (level == SERVICE) {
                 var compressionService = new CompressionService();
                 compressionService.decompressComic(comicFile);
             } else if (level == COMMAND) {
-                var unpackCommand = new UnpackCommand();
-                var ret = unpackCommand.run(directory.toPath());
+                var command = new UnpackCommand();
+                command.setDisableProgressBar(true);
+                var ret = command.run(sandbox.toPath());
                 assertEquals(0, ret);
             }
             // Check correction of target
-            var targetDirectory = new File(directory, "test");
+            var targetDirectory = new File(sandbox, "test");
             assertTrue(targetDirectory.exists());
             assertTrue(targetDirectory.isDirectory());
             var files = targetDirectory.listFiles();
@@ -80,7 +83,7 @@ public class TestUnpack {
             }
             // Also check that the original comic has been backed up
             assertFalse(comicFile.exists());
-            var backup = new File(directory, String.format(".comicutils/%s/test.%s", today(), extension));
+            var backup = new File(sandbox, String.format(".comicutils/%s/test.%s", today(), extension));
             assertTrue(backup.exists());
             assertEquals(originalMd5, md5(backup));
         });
@@ -88,12 +91,12 @@ public class TestUnpack {
 
     @Test
     public void testCommandErrorExistingDirectory() {
-        runTest((File directory) -> {
-            var targetFile = new File(directory, "test.cbr");
+        runTest((File sandbox) -> {
+            var targetFile = new File(sandbox, "test.cbr");
             copyResource("/compressed/test.cbr", targetFile);
-            var obstacle = new File(directory, "test");
+            var obstacle = new File(sandbox, "test");
             assertFalse(obstacle.exists());
-            obstacle.mkdir();
+            mkdir(obstacle);
             assertTrue(obstacle.exists());
             assertTrue(obstacle.isDirectory());
             var compressionService = new CompressionService();
@@ -106,14 +109,16 @@ public class TestUnpack {
 
     @Test
     public void testCommandErrorExistingFile() {
-        runTest((File directory) -> {
-            var comicFile = new File(directory, "test.cbz");
+        runTest((File sandbox) -> {
+            var comicFile = new File(sandbox, "test.cbz");
             copyResource("/compressed/test.cbz", comicFile);
             // Try to unpack it but the file name is taken
-            var obstacle = new File(directory, "test");
-            obstacle.createNewFile();
+            var obstacle = new File(sandbox, "test");
+            createNewFile(obstacle);
             var standardOutput = captureStdOutput(() -> {
-                new UnpackCommand().run(directory.toPath());
+                var command = new UnpackCommand();
+                command.setDisableProgressBar(true);
+                command.run(sandbox.toPath());
             });
             assertTrue(standardOutput.contains("something in the way"));
         });
@@ -121,9 +126,11 @@ public class TestUnpack {
 
     @Test
     public void testCommandErrorNullDirectory() {
-        runTest((File directory) -> {
+        runTest((File sandbox) -> {
             var standardOutput = captureStdOutput(() -> {
-                var result = new UnpackCommand().run(null);
+                var command = new UnpackCommand();
+                command.setDisableProgressBar(true);
+                var result = command.run(null);
                 assertNotEquals(0, result);
             });
             assertTrue(standardOutput.contains("run the command on a non-null directory"));
@@ -132,23 +139,23 @@ public class TestUnpack {
 
     @Test
     public void testServiceErrors() {
-        runTest((File directory) -> {
+        runTest((File sandbox) -> {
             var service = new CompressionService();
             assertThrowsExactly(CompressionException.class, () -> service.decompressComic(null));
             // Existing file
-            var comicFile = new File(directory, "test.cbz");
+            var comicFile = new File(sandbox, "test.cbz");
             copyResource("/compressed/test.cbz", comicFile);
-            var obstacle = new File(directory, "test");
-            obstacle.createNewFile();
+            var obstacle = new File(sandbox, "test");
+            createNewFile(obstacle);
             assertThrowsExactly(CompressionException.class, () -> service.decompressComic(comicFile));
             // Decompress a directory
-            var newDir = new File(directory, "childDir");
-            newDir.mkdirs();
+            var newDir = new File(sandbox, "childDir");
+            mkdir(newDir);
             assertThrowsExactly(CompressionException.class, () -> service.decompressComic(newDir));
             // non existing file
-            assertThrowsExactly(CompressionException.class, () -> service.decompressComic(new File(directory, "lalala")));
+            assertThrowsExactly(CompressionException.class, () -> service.decompressComic(new File(sandbox, "lalala")));
             if (!OSDetection.isWindows()) {
-                var symlink = new File(directory, "symlink");
+                var symlink = new File(sandbox, "symlink");
                 Files.createSymbolicLink(symlink.toPath(), comicFile.toPath());
                 assertThrowsExactly(CompressionException.class, () -> service.decompressComic(symlink));
             }

@@ -1,27 +1,27 @@
 package comics.utils;
 
+import cli.LogUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.Logger;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static java.util.logging.Level.FINE;
 
 // This class manages a backup of discarded files inside $HOME/.comicutils
 public class BackupService {
 
-    private File baseDir = new File(System.getProperty("user.home"));
+    private final static Logger logger = LogUtils.getDefaultLogger();
 
-    public static BackupService get() {
-        return new BackupService();
-    }
+    private final File baseDir;
 
-    private BackupService() { }
-
-    BackupService(File baseDir) {
-        this.baseDir = baseDir;
+    public BackupService() {
+        this.baseDir = new File(System.getProperty("user.home"));
     }
 
     static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
@@ -35,8 +35,8 @@ public class BackupService {
     }
 
     private Path calculatePath(File backupDir, File sourceFile) {
-        File dir = new File(backupDir, DATE_FORMAT.format(new Date()));
-        dir.mkdir();
+        var dir = new File(backupDir, DATE_FORMAT.format(new Date()));
+        if (dir.mkdir()) logger.log(FINE, String.format("Created backup directory %s", dir));
         return new File(dir, sourceFile.getName()).toPath();
     }
 
@@ -52,8 +52,9 @@ public class BackupService {
         // Make it sure the directory exists up to the day
         File parentDir = targetPath.getParent().toFile();
         if (!parentDir.exists()) {
-            parentDir.mkdirs();
+            if (parentDir.mkdirs()) logger.log(FINE, String.format("Recreating path to backup directory %s", parentDir));
         }
         Files.move(f.toPath(), calculatePath(toDir, f), REPLACE_EXISTING);
+        logger.log(FINE, String.format("'%s' moved to backup directory '%s'", f, targetPath));
     }
 }

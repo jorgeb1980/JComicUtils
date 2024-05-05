@@ -10,9 +10,7 @@ public class TestNameConverter {
 
     private void testImplementation(Map<String, String> data) {
         var converter = new NameConverter();
-        data.entrySet().forEach(entry -> {
-            assertEquals(entry.getValue(), converter.normalizeFileName(entry.getKey()));
-        });
+        data.forEach((key, value) -> assertEquals(value, converter.normalizeFileName(key)));
     }
 
     @Test

@@ -1,9 +1,5 @@
 package comics.utils;
 
-import me.tongfei.progressbar.ProgressBar;
-import me.tongfei.progressbar.ProgressBarBuilder;
-import org.mockito.Mockito;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -14,12 +10,10 @@ import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
 
 public class Tools {
 
@@ -27,13 +21,20 @@ public class Tools {
 
     public enum TestLevel { SERVICE, COMMAND; }
 
-    public static String captureStdOutput(Runnable action) {
+    @FunctionalInterface
+    public interface CouldThrowSomething {
+        void run() throws Exception;
+    }
+
+    public static String captureStdOutput(CouldThrowSomething action) {
         final var myOut = new ByteArrayOutputStream();
         final PrintStream originalOut = System.out;
         System.setOut(new PrintStream(myOut));
         String standardOutput = "";
         try {
             action.run();
+        } catch (Exception e) {
+            fail(e);
         } finally {
             standardOutput = myOut.toString();
             System.setOut(originalOut);
@@ -43,15 +44,10 @@ public class Tools {
 
     public static void runTest(RunnableInTempDirectory action) {
         File directory = null;
-        try (var backupMock = Mockito.mockStatic(BackupService.class);
-             var progressBarMock = Mockito.mockStatic(ProgressBar.class)) {
+        try {
             directory = Files.createTempDirectory("tmp" + testCounter.addAndGet(1)).toFile();
-            backupMock.when(BackupService::get).thenReturn(new BackupService(directory));
-            // Mock progress bar too - has some issues when executing under maven
-            progressBarMock.when(
-                () -> ProgressBar.wrap(any(Stream.class), any(ProgressBarBuilder.class))
-            ).thenAnswer(input -> input.getArgument(0));
-            // Run everything inside the temporary directory
+            // Terrible hacks used to avoid having to use mockito
+            System.setProperty("user.home", directory.getAbsolutePath());
             action.run(directory);
         } catch (Exception e) { fail(e); }
         finally {
@@ -91,4 +87,11 @@ public class Tools {
         } catch (IOException ioe) { fail(ioe); }
     }
 
+    public static void createNewFile(File f) throws IOException {
+        if (!f.createNewFile()) fail(String.format("Could not create file %s", f));
+    }
+
+    public static void mkdir(File f) throws IOException {
+        if (!f.mkdir()) fail(String.format("Could not create directory %s", f));
+    }
 }

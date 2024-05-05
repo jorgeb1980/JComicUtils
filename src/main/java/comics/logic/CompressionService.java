@@ -27,7 +27,7 @@ public class CompressionService {
 
     /**
      * Runs 7z to extract the comic file contents into a directory with the same name
-     * @param comicFile Non-null, existing, non-directory, non-symlink, 7z-compatible compressed file into a directory
+     * @param comicFile Not null, existing, non-directory, non-symlink, 7z-compatible compressed file into a directory
      *                  with the same name, without extension, that must not exist
      * @throws CompressionException If any of the aforementioned conditions is not met
      */
@@ -55,7 +55,7 @@ public class CompressionService {
                 parameter("-r").build().launch();
             if (result.getExitCode() != 0) throw new CompressionException(result);
             // If successful, backup the file
-            BackupService.get().backupFile(comicFile);
+            new BackupService().backupFile(comicFile);
         } catch (IOException | ShellException | AssertionError e) {
             throw new CompressionException(e);
         }

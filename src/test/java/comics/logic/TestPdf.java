@@ -10,8 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static comics.commands.Pdf2CbzCommand.DEFAULT_FORMAT;
-import static comics.utils.Tools.copyResource;
-import static comics.utils.Tools.runTest;
+import static comics.utils.Tools.*;
+import static comics.utils.Utils.emptyIfNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
@@ -20,33 +20,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestPdf {
 
     private void checkAllImages(File directory, String format) {
-        var newFiles = Arrays.stream(directory.listFiles()).map(File::getName).filter(s -> s.endsWith(format)).toList();
+        assertTrue(directory.exists());
+        var newFiles = Arrays.stream(emptyIfNull(directory.listFiles())).map(File::getName).filter(s -> s.endsWith(format)).toList();
         assertEquals(6, newFiles.size());
         var expectedFiles = List.of(
-            "image_0." + format,
             "image_1." + format,
             "image_2." + format,
             "image_3." + format,
             "image_4." + format,
-            "image_5." + format
+            "image_5." + format,
+            "image_6." + format
         );
         expectedFiles.forEach(s -> assertTrue(newFiles.contains(s)));
     }
 
     @Test
     public void testServiceEdgeCases() {
-        runTest((File directory) -> {
+        runTest((File sandbox) -> {
             var pdfService = new PdfService();
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(null, "jpg"));
-            var pdf = new File(directory, "test.pdf");
+            var pdf = new File(sandbox, "test.pdf");
             copyResource("/compressed/test.pdf", pdf);
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(pdf, null));
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(pdf, "trololololo"));
-            var dir = new File(directory, "childDir");
-            dir.mkdirs();
+            var dir = new File(sandbox, "childDir");
+            mkdir(dir);
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(dir, "jpg"));
             if (!OSDetection.isWindows()) {
-                var symlink = new File(directory, "symlink");
+                var symlink = new File(sandbox, "symlink");
                 Files.createSymbolicLink(symlink.toPath(), pdf.toPath());
                 assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(symlink, "jpg"));
             }
@@ -55,9 +56,9 @@ public class TestPdf {
 
     @Test
     public void testService() {
-        runTest((File directory) -> {
+        runTest((File sandbox) -> {
             var format = "jpg";
-            var pdf = new File(directory, "test.pdf");
+            var pdf = new File(sandbox, "test.pdf");
             copyResource("/compressed/test.pdf", pdf);
             var createdDirectory = new PdfService().convertPDF(pdf, format);
             // We removed the original file
@@ -71,47 +72,47 @@ public class TestPdf {
 
     @Test
     public void testCommand() {
-        runTest((File directory) -> {
-            var pdf = new File(directory, "test.pdf");
+        runTest((File sandbox) -> {
+            var pdf = new File(sandbox, "test.pdf");
             copyResource("/compressed/test.pdf", pdf);
 
             var command = new Pdf2CbzCommand();
-            var ret = command.execute(directory.toPath());
+            command.setDisableProgressBar(true);
+            var ret = command.execute(sandbox.toPath());
             assertEquals(0, ret);
             // We have created a directory as intermediate step that should not be there any more
-            var intermediateDirectory = new File(directory, "test");
+            var intermediateDirectory = new File(sandbox, "test");
             assertFalse(intermediateDirectory.exists());
             // Result
-            var expectedFile = new File(directory, "test.cbz");
+            var expectedFile = new File(sandbox, "Test.cbz");
             assertTrue(expectedFile.exists());
             assertFalse(expectedFile.isDirectory());
             new CompressionService().decompressComic(expectedFile);
-            assertTrue(intermediateDirectory.exists());
-            checkAllImages(intermediateDirectory, DEFAULT_FORMAT);
+            checkAllImages(new File(sandbox, "Test"), DEFAULT_FORMAT);
         });
     }
 
     @Test
     public void testCommandPng() {
-        runTest((File directory) -> {
+        runTest((File sandbox) -> {
             var format = "png";
-            var pdf = new File(directory, "test.pdf");
+            var pdf = new File(sandbox, "test.pdf");
             copyResource("/compressed/test.pdf", pdf);
 
             var command = new Pdf2CbzCommand();
+            command.setDisableProgressBar(true);
             command.setFormat(format);
-            var ret = command.execute(directory.toPath());
+            var ret = command.execute(sandbox.toPath());
             assertEquals(0, ret);
             // We have created a directory as intermediate step that should not be there any more
-            var intermediateDirectory = new File(directory, "test");
+            var intermediateDirectory = new File(sandbox, "test");
             assertFalse(intermediateDirectory.exists());
             // Result
-            var expectedFile = new File(directory, "test.cbz");
+            var expectedFile = new File(sandbox, "Test.cbz");
             assertTrue(expectedFile.exists());
             assertFalse(expectedFile.isDirectory());
             new CompressionService().decompressComic(expectedFile);
-            assertTrue(intermediateDirectory.exists());
-            checkAllImages(intermediateDirectory, format);
+            checkAllImages(new File(sandbox, "Test"), format);
         });
     }
 }

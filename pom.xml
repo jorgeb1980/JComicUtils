@@ -7,7 +7,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <cli.library.version>1.8.0</cli.library.version>
+        <cli.library.version>1.9.0</cli.library.version>
         <shell.commands.library.version>1.7.1</shell.commands.library.version>
         <java.compiler.version>21</java.compiler.version>
     </properties>
@@ -120,12 +120,6 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>5.10.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>5.11.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

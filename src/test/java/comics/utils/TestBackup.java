@@ -21,17 +21,18 @@ public class TestBackup {
     @Test
     public void testBackup() {
         try {
-            runTest((File directory) -> {
+            runTest((File sandbox) -> {
                 of("test.cbz", "test.cbr").forEach(file -> {
                     // Try to move something to the backup directory
-                    var targetFile = new File(directory, file);
+                    var targetFile = new File(sandbox, file);
                     copyResource("/compressed/" + file, targetFile);
                     assertTrue(targetFile.exists());
                     var originalHashCbz = Tools.md5(targetFile);
-                    try { new BackupService(directory).backupFile(targetFile); } catch (IOException ioe) { fail(ioe); }
+                    // By running inside runTest, backup service has been rigged to write everything inside the test sandbox
+                    try { new BackupService().backupFile(targetFile); } catch (IOException ioe) { fail(ioe); }
                     assertFalse(targetFile.exists());
                     var today = Tools.today();
-                    var backupFile = new File(directory, String.format(".comicutils/%s/" + file, today));
+                    var backupFile = new File(sandbox, String.format(".comicutils/%s/" + file, today));
                     assertTrue(backupFile.exists());
                     assertFalse(backupFile.isDirectory());
                     assertFalse(Files.isSymbolicLink(backupFile.toPath()));
@@ -45,29 +46,29 @@ public class TestBackup {
 
     @Test
     public void cannotCreateBackupDir() {
-        runTest((File directory) -> {
-            File bogus = new File(directory, ".comicutils");
+        runTest((File sandbox) -> {
+            File bogus = new File(sandbox, ".comicutils");
             bogus.createNewFile();
-            File realFile = new File(directory, "something");
+            File realFile = new File(sandbox, "something");
             realFile.createNewFile();
-            assertThrowsExactly(IOException.class, () -> new BackupService(directory).backupFile(realFile));
+            assertThrowsExactly(IOException.class, () -> new BackupService().backupFile(realFile));
         });
     }
 
     @Test
     public void testErrorCases() {
-        runTest((File directory) -> {
-            assertThrowsExactly(AssertionError.class, () -> new BackupService(directory).backupFile(null));
-            assertThrowsExactly(AssertionError.class, () -> new BackupService(directory).backupFile(directory));
-            assertThrowsExactly(AssertionError.class, () -> new BackupService(directory).backupFile(new File(directory, "does not exist")));
+        runTest((File sandbox) -> {
+            assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(null));
+            assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(sandbox));
+            assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(new File(sandbox, "does not exist")));
             if (!OSDetection.isWindows()) {
                 // This requires admin permissions in windows T_T
-                File realFile = new File(directory, "realFile");
+                File realFile = new File(sandbox, "realFile");
                 realFile.createNewFile();
                 Files.write(realFile.toPath(), "trololo".getBytes("UTF-8"));
-                File symlink = new File(directory, "symlink");
+                File symlink = new File(sandbox, "symlink");
                 Files.createSymbolicLink(symlink.toPath(), realFile.toPath());
-                assertThrowsExactly(AssertionError.class, () -> new BackupService(directory).backupFile(symlink));
+                assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(symlink));
             }
         });
     }

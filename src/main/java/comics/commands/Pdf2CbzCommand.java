@@ -9,8 +9,14 @@ import comics.logic.PdfService;
 import java.nio.file.Path;
 
 import static comics.commands.PackCommand.DEFAULT_EXCLUSIONS;
+import static comics.utils.Utils.commonChecks;
 
-@Command(command="pdf2cbz", description="Translates every pdf under CWD into a .cbz file")
+@Command(
+    command="pdf2cbz",
+    description="Translates every pdf under CWD into a .cbz file",
+    // May need a considerable heap for PDF collections
+    jvmArgs="-Xmx35G"
+)
 public class Pdf2CbzCommand {
 
     public static final String DEFAULT_FORMAT = "jpg";
@@ -19,21 +25,19 @@ public class Pdf2CbzCommand {
     private String format = DEFAULT_FORMAT;
     public void setFormat(String format) { this.format = format; }
 
+    @Parameter(name="npb", longName="no-progress-bar", description="If set, the command will display no progress bar")
+    public Boolean disableProgressBar = false;
+    public void setDisableProgressBar(Boolean disable) { disableProgressBar = disable; }
+
     @Run
-    public int execute(Path cwd) {
-        var compressionService = new CompressionService();
-        var pdfService = new PdfService();
-        if (!compressionService.check()) {
-            System.err.println("Compression engine is not ready!");
-            return -1;
-        } else {
-            return new GenericFileListCommand(cwd, "Converting pdf files...").execute(
-                f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("pdf")),
-                f -> {
-                    var directory = pdfService.convertPDF(f, format);
-                    compressionService.compressComic(directory, DEFAULT_EXCLUSIONS);
-                }
-            );
-        }
+    public int execute(Path cwd) throws Exception {
+        commonChecks(disableProgressBar);
+        return new GenericFileListOperation(cwd, "Converting pdf files...").execute(
+            f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("pdf")),
+            f -> {
+                var directory = new PdfService().convertPDF(f, format);
+                new CompressionService().compressComic(directory, DEFAULT_EXCLUSIONS);
+            }
+        );
     }
 }
