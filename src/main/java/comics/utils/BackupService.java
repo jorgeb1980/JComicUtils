@@ -1,5 +1,7 @@
 package comics.utils;
 
+import cli.LogUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,7 +16,7 @@ import static java.util.logging.Level.FINE;
 // This class manages a backup of discarded files inside $HOME/.comicutils
 public class BackupService {
 
-    private final static Logger logger = Logger.getLogger("cli");
+    private final static Logger logger = LogUtils.getDefaultLogger();
 
     private final File baseDir;
 

@@ -7,7 +7,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <cli.library.version>1.9.0-SNAPSHOT</cli.library.version>
+        <cli.library.version>1.9.0</cli.library.version>
         <shell.commands.library.version>1.7.1</shell.commands.library.version>
         <java.compiler.version>21</java.compiler.version>
     </properties>

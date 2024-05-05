@@ -1,5 +1,7 @@
 package comics.commands;
 
+import cli.LogUtils;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -16,7 +18,7 @@ public record GenericFileListOperation(
     Path cwd,
     String caption
 ) {
-    private final static Logger logger = Logger.getLogger("cli");
+    private final static Logger logger = LogUtils.getDefaultLogger();
 
     @FunctionalInterface
     interface FileSelector {
