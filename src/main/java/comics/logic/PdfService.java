@@ -17,13 +17,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+
+import static comics.utils.Utils.emptyIfNull;
 
 // By far the class with the greatest amount of code straight from stackoverflow ¯\_(ツ)_/¯
 public class PdfService {
@@ -73,7 +72,7 @@ public class PdfService {
         assert format != null : "Please provide a non-null format";
         var sanitizedFormat = format.toLowerCase();
         assert formats.contains(sanitizedFormat) : "Please provide a valid format.  Available formats: "
-            + formats.stream().collect(Collectors.joining("\n"));
+            + String.join("\n", formats);
 
         var document = Loader.loadPDF(pdf);
         // Dump the images into the parent directory
@@ -90,7 +89,7 @@ public class PdfService {
 
             Now we rename them, left padding page number with zeroes
         */
-        var images = newDirectory.list((f, s) -> s.toLowerCase().endsWith(sanitizedFormat));
+        var images = emptyIfNull(newDirectory.list((f, s) -> s.toLowerCase().endsWith(sanitizedFormat)));
         var total = images.length;
         for (var image: images) {
             var imageFile = new File(newDirectory, image);
@@ -98,7 +97,7 @@ public class PdfService {
             Files.move(imageFile.toPath(), calculateFilePath(newDirectory, index, total, sanitizedFormat));
         }
         // Remove original file
-        BackupService.get().backupFile(pdf);
+        new BackupService().backupFile(pdf);
         return newDirectory;
     }
 
@@ -122,8 +121,7 @@ public class PdfService {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(bi, format, baos);
-        byte[] bytes = baos.toByteArray();
-        return bytes;
+        return baos.toByteArray();
 
     }
 
