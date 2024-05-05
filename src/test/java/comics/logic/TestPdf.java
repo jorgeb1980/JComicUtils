@@ -23,12 +23,12 @@ public class TestPdf {
         var newFiles = Arrays.stream(directory.listFiles()).map(File::getName).filter(s -> s.endsWith(format)).toList();
         assertEquals(6, newFiles.size());
         var expectedFiles = List.of(
-            "image_0." + format,
             "image_1." + format,
             "image_2." + format,
             "image_3." + format,
             "image_4." + format,
-            "image_5." + format
+            "image_5." + format,
+            "image_6." + format
         );
         expectedFiles.forEach(s -> assertTrue(newFiles.contains(s)));
     }

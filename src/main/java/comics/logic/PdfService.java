@@ -16,11 +16,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 // By far the class with the greatest amount of code straight from stackoverflow ¯\_(ツ)_/¯
@@ -37,6 +39,23 @@ public class PdfService {
             var next = serviceProviders.next();
             formats.addAll(Arrays.stream(next.getFormatNames()).map(String::toLowerCase).toList());
         }
+    }
+
+    private static class Counter {
+        private int counter = 1;
+
+        public int postIncrease() {
+            return counter++;
+        }
+    }
+
+    private int extractIndex(String imageName, String sanitizedFormat) {
+        var ret = -1;
+        var matcher = Pattern.compile("image_(\\d+)\\." + sanitizedFormat).matcher(imageName);
+        if (matcher.find()) {
+            ret = Integer.parseInt(matcher.group(1));
+        }
+        return ret;
     }
 
     /**
@@ -58,23 +77,38 @@ public class PdfService {
 
         var document = Loader.loadPDF(pdf);
         // Dump the images into the parent directory
-        var imagesFromPDF = getImagesFromPDF(document);
-        var total = imagesFromPDF.size();
         var newDirectory = new File(pdf.getParent(), pdf.getName().substring(0, pdf.getName().lastIndexOf('.')));
         newDirectory.mkdir();
-        for (int i = 0; i < total; i++) {
-            var img = imagesFromPDF.get(i);
-            var bytes = toByteArray(img, sanitizedFormat);
-            writeBytes(newDirectory, bytes, calculateFileName(i, total, sanitizedFormat));
+        dumpImagesFromPDF(document, newDirectory, sanitizedFormat);
+        /* Images will be like:
+            image_1.jpg
+            image_2.jpg
+            ...
+            image_99.jpg
+            ...
+            image_999.jpg
+
+            Now we rename them, left padding page number with zeroes
+        */
+        var images = newDirectory.list((f, s) -> s.toLowerCase().endsWith(sanitizedFormat));
+        var total = images.length;
+        for (var image: images) {
+            var imageFile = new File(newDirectory, image);
+            var index = extractIndex(image, sanitizedFormat);
+            Files.move(imageFile.toPath(), calculateFilePath(newDirectory, index, total, sanitizedFormat));
         }
         // Remove original file
         BackupService.get().backupFile(pdf);
         return newDirectory;
     }
 
-    private String calculateFileName(int i, int total, String format) {
+    private Path calculateFilePath(File directory, int i, int total, String format) {
         int width = Integer.toString(total).length();
-        return String.format("image_%0" + width + "d." + format, i);
+        return new File(directory, String.format("image_%0" + width + "d.%s", i, format)).toPath();
+    }
+
+    private String calculateTemporalFilename(Counter counter, String format) {
+        return String.format("image_%d.%s", counter.postIncrease(), format);
     }
 
     private void writeBytes(File directory, byte[] bytes, String fileName) throws IOException {
@@ -93,28 +127,42 @@ public class PdfService {
 
     }
 
-    private List<RenderedImage> getImagesFromPDF(PDDocument document) throws IOException {
-        var images = new ArrayList<RenderedImage>();
-        for (var page : document.getDocumentCatalog().getPages()) {
-            images.addAll(getImagesFromResources(page.getResources()));
-        }
-
-        return images;
+    private void dumpImagesFromPDF(
+        PDDocument document,
+        File directory,
+        String format
+    ) throws IOException {
+        var counter = new Counter();
+        for (var page : document.getDocumentCatalog().getPages())
+            dumpImagesFromResources(page.getResources(), directory, format, counter);
     }
 
-    private List<RenderedImage> getImagesFromResources(PDResources resources) throws IOException {
-        var images = new ArrayList<RenderedImage>();
-
+    private void dumpImagesFromResources(
+        PDResources resources,
+        File directory,
+        String format,
+        Counter counter
+    ) throws IOException {
         for (var xObjectName : resources.getXObjectNames()) {
             PDXObject xObject = resources.getXObject(xObjectName);
 
-            if (xObject instanceof PDFormXObject) {
-                images.addAll(getImagesFromResources(((PDFormXObject) xObject).getResources()));
-            } else if (xObject instanceof PDImageXObject) {
-                images.add(((PDImageXObject) xObject).getImage());
+            if (xObject instanceof PDFormXObject)
+                dumpImagesFromResources(
+                    ((PDFormXObject) xObject).getResources(),
+                    directory,
+                    format,
+                    counter
+                );
+            else if (xObject instanceof PDImageXObject) {
+                writeBytes(
+                    directory,
+                    toByteArray(
+                        ((PDImageXObject) xObject).getImage(),
+                        format
+                    ),
+                    calculateTemporalFilename(counter, format)
+                );
             }
         }
-
-        return images;
     }
 }

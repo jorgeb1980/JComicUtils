@@ -18,7 +18,7 @@ public class UnpackCommand {
         } else {
             return new GenericFileListCommand(cwd, "Unpacking comics...").execute(
                 f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("cbz") || f.getName().toLowerCase().endsWith("cbr")),
-                f -> compressionService.decompressComic(f)
+                compressionService::decompressComic
             );
         }
     }

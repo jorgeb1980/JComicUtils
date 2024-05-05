@@ -5,6 +5,7 @@ import cli.annotations.Parameter;
 import cli.annotations.Run;
 import comics.logic.CompressionService;
 
+import java.io.File;
 import java.nio.file.Path;
 
 @Command(command="pack", description="Packs every sub-directory under CWD into a .cbz file")
@@ -24,7 +25,7 @@ public class PackCommand {
             return -1;
         } else {
             return new GenericFileListCommand(cwd, "Packing comics...").execute(
-                dir -> dir.isDirectory(),
+                File::isDirectory,
                 dir -> compressionService.compressComic(dir, all ? null : DEFAULT_EXCLUSIONS)
             );
         }
