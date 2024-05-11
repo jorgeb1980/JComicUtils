@@ -45,6 +45,12 @@ public class TestUnpack {
         testUnpack(level, "cbr");
     }
 
+    private void checkFile(File f) {
+        assertTrue(f.exists());
+        assertFalse(f.isDirectory());
+        assertFalse(Files.isSymbolicLink(f.toPath()));
+    }
+
     private void testUnpack(TestLevel level, String extension) {
         runTest((File sandbox) -> {
             var comicFile = new File(sandbox, "test." + extension);
@@ -65,22 +71,20 @@ public class TestUnpack {
             assertTrue(targetDirectory.isDirectory());
             var files = targetDirectory.listFiles();
             assertNotNull(files);
-            assertEquals(7, files.length);
+            assertEquals(9, files.length);
             // Check foo.txt, bar.txt, baz.txt
             for (var s: new String[]{"foo", "bar", "baz"}) {
                 var f = new File(targetDirectory, s + ".txt");
-                assertTrue(f.exists());
-                assertFalse(f.isDirectory());
-                assertFalse(Files.isSymbolicLink(f.toPath()));
+                checkFile(f);
                 assertEquals(s, Files.readString(f.toPath()).trim());
             }
             // Check up.jpg, right.jpg, down.jpg, left.jpg
             for (var s: new String[]{"up", "right", "down", "left"}) {
-                var f = new File(targetDirectory, s + ".jpg");
-                assertTrue(f.exists());
-                assertFalse(f.isDirectory());
-                assertFalse(Files.isSymbolicLink(f.toPath()));
+                checkFile(new File(targetDirectory, s + ".jpg"));
             }
+            // Check for the xml and db files
+            checkFile(new File(targetDirectory, "should_not_be_here.xml"));
+            checkFile(new File(targetDirectory, "thumbs.db"));
             // Also check that the original comic has been backed up
             assertFalse(comicFile.exists());
             var backup = new File(sandbox, String.format(".comicutils/%s/test.%s", today(), extension));

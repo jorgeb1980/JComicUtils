@@ -13,7 +13,7 @@ import static comics.utils.Utils.commonChecks;
 @Command(command="pack", description="Packs every sub-directory under CWD into a .cbz file")
 public class PackCommand {
 
-    static final String[] DEFAULT_EXCLUSIONS = new String[] { "txt" };
+    static final String[] DEFAULT_EXCLUSIONS = new String[] { "txt", "xml", "db" };
 
     @Parameter(name="a", longName="all", description="If set, the command will include non-image files in the comics")
     public Boolean all = false;
