@@ -61,7 +61,7 @@ public class TestRepack {
             assertTrue(newDir.isDirectory());
             var expectedFiles = List.of(
                 "up.jpg", "right.jpg", "down.jpg", "left.jpg",
-                "foo.txt", "bar.txt", "baz.txt"
+                "foo.txt", "bar.txt", "baz.txt", "should_not_be_here.xml", "thumbs.db"
             );
             var children = Arrays.stream(emptyIfNull(newDir.listFiles())).map(File::getName).toList();
             assertEquals(expectedFiles.size(), children.size());

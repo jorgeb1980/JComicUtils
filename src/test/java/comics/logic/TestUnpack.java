@@ -5,10 +5,13 @@ import comics.utils.Tools.TestLevel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import shell.OSDetection;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.List;
 
 import static comics.utils.Tools.TestLevel.COMMAND;
 import static comics.utils.Tools.TestLevel.SERVICE;
@@ -19,6 +22,7 @@ import static comics.utils.Tools.md5;
 import static comics.utils.Tools.mkdir;
 import static comics.utils.Tools.runTest;
 import static comics.utils.Tools.today;
+import static comics.utils.Utils.emptyIfNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -45,6 +49,12 @@ public class TestUnpack {
         testUnpack(level, "cbr");
     }
 
+    private void checkFile(File f) {
+        assertTrue(f.exists());
+        assertFalse(f.isDirectory());
+        assertFalse(Files.isSymbolicLink(f.toPath()));
+    }
+
     private void testUnpack(TestLevel level, String extension) {
         runTest((File sandbox) -> {
             var comicFile = new File(sandbox, "test." + extension);
@@ -65,22 +75,20 @@ public class TestUnpack {
             assertTrue(targetDirectory.isDirectory());
             var files = targetDirectory.listFiles();
             assertNotNull(files);
-            assertEquals(7, files.length);
+            assertEquals(9, files.length);
             // Check foo.txt, bar.txt, baz.txt
             for (var s: new String[]{"foo", "bar", "baz"}) {
                 var f = new File(targetDirectory, s + ".txt");
-                assertTrue(f.exists());
-                assertFalse(f.isDirectory());
-                assertFalse(Files.isSymbolicLink(f.toPath()));
+                checkFile(f);
                 assertEquals(s, Files.readString(f.toPath()).trim());
             }
             // Check up.jpg, right.jpg, down.jpg, left.jpg
             for (var s: new String[]{"up", "right", "down", "left"}) {
-                var f = new File(targetDirectory, s + ".jpg");
-                assertTrue(f.exists());
-                assertFalse(f.isDirectory());
-                assertFalse(Files.isSymbolicLink(f.toPath()));
+                checkFile(new File(targetDirectory, s + ".jpg"));
             }
+            // Check for the xml and db files
+            checkFile(new File(targetDirectory, "should_not_be_here.xml"));
+            checkFile(new File(targetDirectory, "thumbs.db"));
             // Also check that the original comic has been backed up
             assertFalse(comicFile.exists());
             var backup = new File(sandbox, String.format(".comicutils/%s/test.%s", today(), extension));
@@ -159,6 +167,48 @@ public class TestUnpack {
                 Files.createSymbolicLink(symlink.toPath(), comicFile.toPath());
                 assertThrowsExactly(CompressionException.class, () -> service.decompressComic(symlink));
             }
+        });
+    }
+
+    private void checkDirectory(File f) {
+        assertTrue(f.exists());
+        assertTrue(f.isDirectory());
+    }
+
+    private void checkChildrenFiles(File dir, List<String> children) {
+        children.forEach(f -> {
+            var file = new File(dir, f);
+            assertTrue(file.exists());
+            assertFalse(file.isDirectory());
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "cbr", "cbz" })
+    public void testDirectoryHierarchy(String extension) {
+        runTest((File sandbox) -> {
+            File targetFile = new File(sandbox, "test_with_directories." + extension);
+            copyResource(
+                "/compressed/test_with_directories." + extension,
+                targetFile
+            );
+            var command = new UnpackCommand();
+            command.setDisableProgressBar(true);
+            command.run(sandbox.toPath());
+            assertFalse(targetFile.exists());
+            File newDirectory = new File(sandbox, "test_with_directories");
+            checkDirectory(newDirectory);
+            // Contents
+            var dir1 = new File(newDirectory, "dir1");
+            var dir2 = new File(newDirectory, "dir2");
+            checkDirectory(dir1);
+            checkDirectory(dir2);
+            // Base directory has no files
+            assertTrue(Arrays.stream(emptyIfNull(newDirectory.listFiles())).filter(f -> !f.isDirectory()).toList().isEmpty());
+            var childrenDir1 = List.of("down.jpg", "left.jpg", "foo.txt", "bar.txt", "baz.txt");
+            var childrenDir2 = List.of("right.jpg", "up.jpg", "should_not_be_here.xml", "thumbs.db");
+            checkChildrenFiles(dir1, childrenDir1);
+            checkChildrenFiles(dir2, childrenDir2);
         });
     }
 }
