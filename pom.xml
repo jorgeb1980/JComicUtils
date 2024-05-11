@@ -3,15 +3,21 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>comics</groupId>
     <artifactId>jcomicsutils</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <cli.library.version>1.9.0</cli.library.version>
+        <cli.library.version>1.10.0</cli.library.version>
         <shell.commands.library.version>1.7.1</shell.commands.library.version>
         <java.compiler.version>21</java.compiler.version>
     </properties>
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <finalName>redist/libs/jcomicsutils-${project.version}</finalName>
         <plugins>
             <plugin>
