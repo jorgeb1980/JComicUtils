@@ -52,7 +52,8 @@ public class CompressionService {
                 parameter(comicFile.getAbsolutePath()).
                 parameter("-o" + targetDirectory.getAbsolutePath()).
                 parameter("*").
-                parameter("-r").build().launch();
+                parameter("-r").
+                parameter("-spf").build().launch();
             if (result.getExitCode() != 0) throw new CompressionException(result);
             // If successful, backup the file
             new BackupService().backupFile(comicFile);
