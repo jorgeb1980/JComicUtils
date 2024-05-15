@@ -7,8 +7,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-import static comics.utils.Tools.copyResource;
-import static comics.utils.Tools.runTest;
+import static comics.utils.Tools.sandbox;
 import static comics.utils.Utils.emptyIfNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -18,9 +17,9 @@ public class TestRepack {
 
     @Test
     public void testCommandRegularExecution() {
-        runTest((File sandbox) -> {
-            var comicFile = new File(sandbox, "Another test 456.cbr");
-            copyResource("/compressed/test.cbr", comicFile);
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            var comicFile = sb.copyResource("/compressed/test.cbr", "Another test 456.cbr");
             var command = new RepackCommand();
             command.setDisableProgressBar(true);
             command.execute(sandbox.toPath());
@@ -43,9 +42,9 @@ public class TestRepack {
 
     @Test
     public void testCommandIncludeAll() {
-        runTest((File sandbox) -> {
-            var comicFile = new File(sandbox, "test 1.cbr");
-            copyResource("/compressed/test.cbr", comicFile);
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            var comicFile = sb.copyResource("/compressed/test.cbr", "test 1.cbr");
             var command = new RepackCommand();
             command.setDisableProgressBar(true);
             command.setAll(true);

@@ -15,25 +15,28 @@ import java.util.List;
 
 import static comics.utils.Tools.TestLevel.COMMAND;
 import static comics.utils.Tools.TestLevel.SERVICE;
-import static comics.utils.Tools.copyResource;
 import static comics.utils.Tools.createNewFile;
 import static comics.utils.Tools.md5;
 import static comics.utils.Tools.mkdir;
-import static comics.utils.Tools.runTest;
+import static comics.utils.Tools.sandbox;
 import static comics.utils.Utils.emptyIfNull;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestPack {
 
     @ParameterizedTest
     @EnumSource(TestLevel.class)
     public void testPackNoExclusions(TestLevel level) {
-        runTest((File sandbox) -> {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
             final var fileName = "some comic";
             var childDirectory = new File(sandbox, fileName);
             mkdir(childDirectory);
             // Populate the directory
-            for (var s: Arrays.asList(
+            List.of(
                 "foo.txt",
                 "bar.txt",
                 "baz.txt",
@@ -41,10 +44,10 @@ public class TestPack {
                 "right.jpg",
                 "down.jpg",
                 "left.jpg"
-            )) copyResource("/uncompressed/" + s, new File(childDirectory, s));
+            ).forEach(s -> sb.copyResource("/uncompressed/" + s, childDirectory.getName() + "/" + s));
             // Remember the directory
             var originalData = new HashMap<String, String>();
-            for (var f: emptyIfNull(childDirectory.listFiles())) {
+            for (var f : emptyIfNull(childDirectory.listFiles())) {
                 originalData.put(f.getName(), md5(f));
             }
             if (level == SERVICE) {
@@ -66,7 +69,7 @@ public class TestPack {
             assertFalse(comicFile.exists());
             assertTrue(newChildDirectory.exists());
             assertEquals(originalData.keySet().size(), emptyIfNull(newChildDirectory.listFiles()).length);
-            for (var f: emptyIfNull(newChildDirectory.listFiles())) {
+            for (var f : emptyIfNull(newChildDirectory.listFiles())) {
                 assertEquals(originalData.get(f.getName()), md5(f));
             }
         });
@@ -75,7 +78,8 @@ public class TestPack {
     @ParameterizedTest
     @EnumSource(TestLevel.class)
     public void testPackWithExclusions(TestLevel level) {
-        runTest((File sandbox) -> {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
             final var fileName = "some comic";
             var childDirectory = new File(sandbox, fileName);
             mkdir(childDirectory);
@@ -88,7 +92,7 @@ public class TestPack {
                 "right.jpg",
                 "down.jpg",
                 "left.jpg"
-            ).forEach(s -> copyResource("/uncompressed/" + s, new File(childDirectory, s)));
+            ).forEach(s -> sb.copyResource("/uncompressed/" + s, childDirectory.getName() + "/" + s));
             // Remember the directory
             var originalData = new HashMap<String, String>();
             for (var f: emptyIfNull(childDirectory.listFiles())) {
@@ -125,7 +129,8 @@ public class TestPack {
     @ParameterizedTest
     @EnumSource(TestLevel.class)
     public void testPackEmpty(TestLevel level) {
-        runTest((File sandbox) -> {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
             final var fileName = "some comic";
             var childDirectory = new File(sandbox, fileName);
             mkdir(childDirectory);
@@ -134,7 +139,7 @@ public class TestPack {
                 "foo.txt",
                 "bar.txt",
                 "baz.txt"
-            ).forEach(s -> copyResource("/uncompressed/" + s, new File(childDirectory, s)));
+            ).forEach(s -> sb.copyResource("/uncompressed/" + s));
             if (level == SERVICE) {
                 var compressionService = new CompressionService();
                 compressionService.compressComic(childDirectory, "txt");
@@ -157,7 +162,8 @@ public class TestPack {
 
     @Test
     public void testServiceErrors() {
-        runTest((File sandbox) -> {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
             var service = new CompressionService();
             assertThrows(CompressionException.class, () -> service.compressComic(null));
             assertThrows(CompressionException.class, () -> service.compressComic(new File("does not exist")));

@@ -15,12 +15,10 @@ import java.util.List;
 
 import static comics.utils.Tools.TestLevel.COMMAND;
 import static comics.utils.Tools.TestLevel.SERVICE;
-import static comics.utils.Tools.captureStdOutput;
-import static comics.utils.Tools.copyResource;
 import static comics.utils.Tools.createNewFile;
 import static comics.utils.Tools.md5;
 import static comics.utils.Tools.mkdir;
-import static comics.utils.Tools.runTest;
+import static comics.utils.Tools.sandbox;
 import static comics.utils.Tools.today;
 import static comics.utils.Utils.emptyIfNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static test.CaptureOutput.captureOutput;
 
 public class TestUnpack {
 
@@ -56,9 +55,9 @@ public class TestUnpack {
     }
 
     private void testUnpack(TestLevel level, String extension) {
-        runTest((File sandbox) -> {
-            var comicFile = new File(sandbox, "test." + extension);
-            copyResource("/compressed/test." + extension, comicFile);
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            var comicFile = sb.copyResource("/compressed/test." + extension, "test." + extension);
             var originalMd5 = md5(comicFile);
             if (level == SERVICE) {
                 var compressionService = new CompressionService();
@@ -99,9 +98,9 @@ public class TestUnpack {
 
     @Test
     public void testCommandErrorExistingDirectory() {
-        runTest((File sandbox) -> {
-            var targetFile = new File(sandbox, "test.cbr");
-            copyResource("/compressed/test.cbr", targetFile);
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            var targetFile = sb.copyResource("/compressed/test.cbr", "test.cbr");
             var obstacle = new File(sandbox, "test");
             assertFalse(obstacle.exists());
             mkdir(obstacle);
@@ -117,42 +116,43 @@ public class TestUnpack {
 
     @Test
     public void testCommandErrorExistingFile() {
-        runTest((File sandbox) -> {
-            var comicFile = new File(sandbox, "test.cbz");
-            copyResource("/compressed/test.cbz", comicFile);
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            sb.copyResource("/compressed/test.cbz", "test.cbz");
             // Try to unpack it but the file name is taken
             var obstacle = new File(sandbox, "test");
             createNewFile(obstacle);
-            var standardOutput = captureStdOutput(() -> {
+            var ctx = captureOutput(() -> {
                 var command = new UnpackCommand();
                 command.setDisableProgressBar(true);
                 command.run(sandbox.toPath());
             });
-            assertTrue(standardOutput.contains("something in the way"));
+            assertTrue(ctx.out().contains("something in the way"));
         });
     }
 
     @Test
     public void testCommandErrorNullDirectory() {
-        runTest((File sandbox) -> {
-            var standardOutput = captureStdOutput(() -> {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            var ctx = captureOutput(() -> {
                 var command = new UnpackCommand();
                 command.setDisableProgressBar(true);
                 var result = command.run(null);
                 assertNotEquals(0, result);
             });
-            assertTrue(standardOutput.contains("run the command on a non-null directory"));
+            assertTrue(ctx.out().contains("run the command on a non-null directory"));
         });
     }
 
     @Test
     public void testServiceErrors() {
-        runTest((File sandbox) -> {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
             var service = new CompressionService();
             assertThrowsExactly(CompressionException.class, () -> service.decompressComic(null));
             // Existing file
-            var comicFile = new File(sandbox, "test.cbz");
-            copyResource("/compressed/test.cbz", comicFile);
+            var comicFile = sb.copyResource("/compressed/test.cbz", "test.cbz");
             var obstacle = new File(sandbox, "test");
             createNewFile(obstacle);
             assertThrowsExactly(CompressionException.class, () -> service.decompressComic(comicFile));
@@ -186,11 +186,11 @@ public class TestUnpack {
     @ParameterizedTest
     @ValueSource(strings = { "cbr", "cbz" })
     public void testDirectoryHierarchy(String extension) {
-        runTest((File sandbox) -> {
-            File targetFile = new File(sandbox, "test_with_directories." + extension);
-            copyResource(
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            var targetFile = sb.copyResource(
                 "/compressed/test_with_directories." + extension,
-                targetFile
+                "test_with_directories." + extension
             );
             var command = new UnpackCommand();
             command.setDisableProgressBar(true);

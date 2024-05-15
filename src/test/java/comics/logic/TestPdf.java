@@ -10,7 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static comics.commands.Pdf2CbzCommand.DEFAULT_FORMAT;
-import static comics.utils.Tools.*;
+import static comics.utils.Tools.mkdir;
+import static comics.utils.Tools.sandbox;
 import static comics.utils.Utils.emptyIfNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -36,11 +37,11 @@ public class TestPdf {
 
     @Test
     public void testServiceEdgeCases() {
-        runTest((File sandbox) -> {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
             var pdfService = new PdfService();
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(null, "jpg"));
-            var pdf = new File(sandbox, "test.pdf");
-            copyResource("/compressed/test.pdf", pdf);
+            var pdf = sb.copyResource("/compressed/test.pdf", "test.pdf");
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(pdf, null));
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(pdf, "trololololo"));
             var dir = new File(sandbox, "childDir");
@@ -56,10 +57,10 @@ public class TestPdf {
 
     @Test
     public void testService() {
-        runTest((File sandbox) -> {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
             var format = "jpg";
-            var pdf = new File(sandbox, "test.pdf");
-            copyResource("/compressed/test.pdf", pdf);
+            var pdf = sb.copyResource("/compressed/test.pdf", "test.pdf");
             var createdDirectory = new PdfService().convertPDF(pdf, format);
             // We removed the original file
             assertFalse(pdf.exists());
@@ -72,14 +73,14 @@ public class TestPdf {
 
     @Test
     public void testCommand() {
-        runTest((File sandbox) -> {
-            var pdf = new File(sandbox, "test.pdf");
-            copyResource("/compressed/test.pdf", pdf);
-
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            var pdf = sb.copyResource("/compressed/test.pdf", "test.pdf");
             var command = new Pdf2CbzCommand();
             command.setDisableProgressBar(true);
             var ret = command.execute(sandbox.toPath());
             assertEquals(0, ret);
+            assertFalse(pdf.exists());
             // We have created a directory as intermediate step that should not be there any more
             var intermediateDirectory = new File(sandbox, "test");
             assertFalse(intermediateDirectory.exists());
@@ -94,10 +95,10 @@ public class TestPdf {
 
     @Test
     public void testCommandPng() {
-        runTest((File sandbox) -> {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
             var format = "png";
-            var pdf = new File(sandbox, "test.pdf");
-            copyResource("/compressed/test.pdf", pdf);
+            var pdf = sb.copyResource("/compressed/test.pdf", "test.pdf");
 
             var command = new Pdf2CbzCommand();
             command.setDisableProgressBar(true);
