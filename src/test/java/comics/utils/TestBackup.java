@@ -7,8 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import static comics.utils.Tools.copyResource;
-import static comics.utils.Tools.runTest;
+import static comics.utils.Tools.sandbox;
 import static java.util.List.of;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -21,11 +20,11 @@ public class TestBackup {
     @Test
     public void testBackup() {
         try {
-            runTest((File sandbox) -> {
+            var sb = sandbox();
+            sb.runTest((File sandbox) -> {
                 of("test.cbz", "test.cbr").forEach(file -> {
                     // Try to move something to the backup directory
-                    var targetFile = new File(sandbox, file);
-                    copyResource("/compressed/" + file, targetFile);
+                    var targetFile = sb.copyResource("/compressed/" + file, file);
                     assertTrue(targetFile.exists());
                     var originalHashCbz = Tools.md5(targetFile);
                     // By running inside runTest, backup service has been rigged to write everything inside the test sandbox
@@ -46,7 +45,7 @@ public class TestBackup {
 
     @Test
     public void cannotCreateBackupDir() {
-        runTest((File sandbox) -> {
+        sandbox().runTest((File sandbox) -> {
             File bogus = new File(sandbox, ".comicutils");
             bogus.createNewFile();
             File realFile = new File(sandbox, "something");
@@ -57,7 +56,7 @@ public class TestBackup {
 
     @Test
     public void testErrorCases() {
-        runTest((File sandbox) -> {
+        sandbox().runTest((File sandbox) -> {
             assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(null));
             assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(sandbox));
             assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(new File(sandbox, "does not exist")));

@@ -6,15 +6,15 @@ import shell.OSDetection;
 import java.io.File;
 import java.nio.file.Files;
 
-import static comics.utils.Tools.runTest;
 import static comics.utils.Utils.removeDirectory;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static test.Sandbox.sandbox;
 
 public class TestUtils {
 
     @Test
     public void testRemoveDirEdgeCases() {
-        runTest((File directory) -> {
+        sandbox().runTest((File directory) -> {
             assertThrowsExactly(AssertionError.class, () -> removeDirectory(null));
             assertThrowsExactly(AssertionError.class, () -> removeDirectory(new File(directory, "does not exist")));
             File realFile = new File(directory, "whatever");
