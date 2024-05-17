@@ -10,7 +10,7 @@
         <cli.library.version>1.10.0</cli.library.version>
         <shell.commands.library.version>1.7.1</shell.commands.library.version>
         <java.compiler.version>21</java.compiler.version>
-        <test.library.revision>1.0.0-SNAPSHOT</test.library.revision>
+        <test.library.revision>1.0.0</test.library.revision>
     </properties>
     <build>
         <resources>
