@@ -30,7 +30,7 @@ public class Pdf2CbzCommand {
     public void setDisableProgressBar(Boolean disable) { disableProgressBar = disable; }
 
     @Run
-    public int execute(Path cwd) throws Exception {
+    public int run(Path cwd) throws Exception {
         commonChecks(disableProgressBar);
         return new GenericFileListOperation(cwd, "Converting pdf files...").execute(
             f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("pdf")),

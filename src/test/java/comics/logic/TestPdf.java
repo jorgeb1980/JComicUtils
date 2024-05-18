@@ -78,7 +78,7 @@ public class TestPdf {
             var pdf = sb.copyResource("/compressed/test.pdf", "test.pdf");
             var command = new Pdf2CbzCommand();
             command.setDisableProgressBar(true);
-            var ret = command.execute(sandbox.toPath());
+            var ret = command.run(sandbox.toPath());
             assertEquals(0, ret);
             assertFalse(pdf.exists());
             // We have created a directory as intermediate step that should not be there any more
@@ -103,7 +103,7 @@ public class TestPdf {
             var command = new Pdf2CbzCommand();
             command.setDisableProgressBar(true);
             command.setFormat(format);
-            var ret = command.execute(sandbox.toPath());
+            var ret = command.run(sandbox.toPath());
             assertEquals(0, ret);
             // We have created a directory as intermediate step that should not be there any more
             var intermediateDirectory = new File(sandbox, "test");

@@ -4,6 +4,8 @@ import cli.annotations.Command;
 import cli.annotations.Parameter;
 import cli.annotations.Run;
 import comics.logic.CompressionService;
+import comics.logic.RepeatedNamesValidator;
+import org.apache.pdfbox.contentstream.operator.graphics.CurveToReplicateFinalPoint;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -23,7 +25,7 @@ public class RepackCommand {
     public void setDisableProgressBar(Boolean disable) { disableProgressBar = disable; }
 
     @Run
-    public int execute(Path cwd) throws Exception {
+    public int run(Path cwd) throws Exception {
         commonChecks(disableProgressBar);
         return new GenericFileListOperation(cwd, "Repacking comics...").execute(
             f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("cbz") || f.getName().toLowerCase().endsWith("cbr")),
@@ -35,7 +37,8 @@ public class RepackCommand {
                 var compressionService = new CompressionService();
                 compressionService.decompressComic(f);
                 compressionService.compressComic(expectedDirectory, all ? null : DEFAULT_EXCLUSIONS);
-            }
+            },
+            new RepeatedNamesValidator()
         );
     }
 }

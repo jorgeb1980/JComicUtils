@@ -187,7 +187,11 @@ public class TestPack {
             sb.copyResource("/uncompressed/up.jpg", "some directory/up.jpg");
             var packCommand = new PackCommand();
             packCommand.setDisableProgressBar(true);
-            return packCommand.run(sandbox.toPath());
+            var ret = packCommand.run(sandbox.toPath());
+            // The directories have not been removed
+            assertTrue(new File(sandbox, "some directory [by some guy]").exists());
+            assertTrue(new File(sandbox, "some directory").exists());
+            return ret;
         }, true);
         assertTrue(
             ctx.err().contains(String.format("The following files have a naming conflict:%nSome Directory"))

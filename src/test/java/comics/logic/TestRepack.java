@@ -22,7 +22,7 @@ public class TestRepack {
             var comicFile = sb.copyResource("/compressed/test.cbr", "Another test 456.cbr");
             var command = new RepackCommand();
             command.setDisableProgressBar(true);
-            command.execute(sandbox.toPath());
+            command.run(sandbox.toPath());
             assertFalse(comicFile.exists());
             var targetFile = new File(sandbox, "Another Test - 456.cbz");
             assertTrue(targetFile.exists());
@@ -48,7 +48,7 @@ public class TestRepack {
             var command = new RepackCommand();
             command.setDisableProgressBar(true);
             command.setAll(true);
-            command.execute(sandbox.toPath());
+            command.run(sandbox.toPath());
             assertFalse(comicFile.exists());
             var targetFile = new File(sandbox, "Test - 1.cbz");
             assertTrue(targetFile.exists());
@@ -66,5 +66,24 @@ public class TestRepack {
             assertEquals(expectedFiles.size(), children.size());
             expectedFiles.forEach(f -> assertTrue(children.contains(f)));
         });
+    }
+
+    @Test
+    public void testPreventRepeatedFiles() {
+        var sb = sandbox();
+        var ctx = sb.runTest((File sandbox) -> {
+            sb.copyResource("/compressed/test.cbr", "test.cbr");
+            sb.copyResource("/compressed/test.cbr", "test [by some guy].cbr");
+            var repackCommand = new RepackCommand();
+            repackCommand.setDisableProgressBar(true);
+            var ret = repackCommand.run(sandbox.toPath());
+            // No files touched
+            assertTrue(new File(sandbox, "test.cbr").exists());
+            assertTrue(new File(sandbox, "test [by some guy].cbr").exists());
+            return ret;
+        }, true);
+        assertTrue(
+            ctx.err().contains(String.format("The following files have a naming conflict:%nTest"))
+        );
     }
 }
