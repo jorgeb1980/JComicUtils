@@ -232,9 +232,10 @@ public class TestPack {
             unpackCommand.setDisableProgressBar(true);
             unpackCommand.run(sandbox.toPath());
 
-            assertTrue(baseDir.exists());
-            assertTrue(new File(baseDir, "up.jpg").exists());
-            assertFalse(undesiredDir.exists());
+            var newBaseDir = new File(sandbox, "Comic");
+            assertTrue(newBaseDir.exists());
+            assertTrue(new File(newBaseDir, "up.jpg").exists());
+            assertFalse(new File(newBaseDir, "__MACOSX").exists());
         });
     }
 }
