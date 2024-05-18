@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -99,14 +100,17 @@ public class CompressionService {
                 new NameConverter().normalizeFileName(directory.getName() + ".cbz")
             );
 
+            var garbage = garbageCollector ? collectGarbage(directory, exclusions) : new LinkedList<File>();
+            // Detect trivial nesting case:
+            // Single subdirectory below root with every image hanging from there
+            var finalDirectory = searchForTrivialNestingCase(directory, garbage, exclusions);
+
             var builder = ShellCommandLauncher.builder().
-                cwd(directory).
+                cwd(finalDirectory).
                 command("7z").
                 parameter("a").
                 parameter("-tzip");
-            if (garbageCollector) {
-                collectGarbage(directory, exclusions).forEach(s -> builder.parameter("-xr!" + s.getName()));
-            }
+                garbage.forEach(s -> builder.parameter("-xr!" + s.getName()));
             for (String dir: DEFAULT_DIRECTORY_EXCLUSIONS)
                 builder.parameter("-xr!" + dir);
             if (exclusions != null)
@@ -117,6 +121,30 @@ public class CompressionService {
             // Zip file generated successfully - remove the original directory
             Utils.removeDirectory(directory);
         } catch (ShellException | AssertionError | IOException ioe) { throw new CompressionException(ioe); }
+    }
+
+    // Searches for every image file in the directory and, if all of them are in the same place, it will
+    //  pack from there
+    private File searchForTrivialNestingCase(File directory, List<File> garbage, String... exclusions) {
+        var images = new HashMap<File, LinkedList<File>>();
+        var files = new LinkedList<File>();
+        files.add(directory);
+
+        while (!files.isEmpty()) {
+            var file = files.remove();
+            for (var f: file.listFiles()) {
+                if (f.isDirectory()) files.add(f);
+                else {
+                    if (!isExcluded(f, exclusions) && !garbage.contains(f)) {
+                        // if this is a valid image of the comic, then store in the list
+                        images.computeIfAbsent(f.getParentFile(), key -> new LinkedList<>()).add(f);
+                    }
+                }
+            }
+        }
+
+        if (images.keySet().size() == 0 || images.keySet().size() > 1) return directory;
+        else return images.keySet().stream().findFirst().get();
     }
 
     private List<File> collectGarbage(File directory, String... exclusions) {
@@ -146,9 +174,10 @@ public class CompressionService {
 
     private boolean isExcluded(File f, String... exclusions) {
         var excluded = false;
-        for (var s: exclusions) {
-            excluded |= f.getName().toLowerCase().endsWith("." + s.toLowerCase());
-        }
+        if (exclusions != null)
+            for (var s: exclusions) {
+                excluded |= f.getName().toLowerCase().endsWith("." + s.toLowerCase());
+            }
         return excluded;
     }
 }

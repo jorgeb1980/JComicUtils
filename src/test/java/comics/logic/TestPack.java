@@ -270,4 +270,116 @@ public class TestPack {
             assertTrue(new File(newBaseDir, "up.jpg").exists());
         });
     }
+
+    @Test
+    public void testTrivialNestingCase() {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            sb.copyResource("/uncompressed/up.jpg", "comic/unnecessary nesting/up.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/unnecessary nesting/right.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/unnecessary nesting/down.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/unnecessary nesting/left.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/unnecessary nesting/bar.txt");
+
+            var packCommand = new PackCommand();
+            packCommand.setDisableProgressBar(true);
+            packCommand.run(sandbox.toPath());
+
+            // After unpacking, we should have only the 4 images directly in the 'Comic' directory
+            var unpackCommand = new UnpackCommand();
+            unpackCommand.setDisableProgressBar(true);
+            unpackCommand.run(sandbox.toPath());
+
+            var comicDir = new File(sandbox, "Comic");
+            assertTrue(comicDir.exists());
+            assertTrue(comicDir.isDirectory());
+
+            // No directory children
+            assertTrue(Arrays.stream(comicDir.listFiles()).filter(File::isDirectory).toList().isEmpty());
+            assertTrue(new File(comicDir, "left.jpg").exists());
+            assertTrue(new File(comicDir, "down.jpg").exists());
+            assertTrue(new File(comicDir, "right.jpg").exists());
+            assertTrue(new File(comicDir, "up.jpg").exists());
+        });
+    }
+
+    @Test
+    public void testNonTrivialNestingCase() {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/unnecessary nesting/up.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/unnecessary nesting/right.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/unnecessary nesting/down.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/unnecessary nesting/left.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/unnecessary nesting/z-left.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/unnecessary nesting/bar.txt");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/this is only trash/baz.txt");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/this is only trash/some nerd.jpg");
+
+            var packCommand = new PackCommand();
+            packCommand.setDisableProgressBar(true);
+            packCommand.setGarbageCollector(true);
+            packCommand.run(sandbox.toPath());
+
+            // After unpacking, we should have only the 4 images directly in the 'Comic' directory
+            var unpackCommand = new UnpackCommand();
+            unpackCommand.setDisableProgressBar(true);
+            unpackCommand.run(sandbox.toPath());
+
+            var comicDir = new File(sandbox, "Comic");
+            assertTrue(comicDir.exists());
+            assertTrue(comicDir.isDirectory());
+
+            // No directory children
+            assertTrue(Arrays.stream(comicDir.listFiles()).filter(File::isDirectory).toList().isEmpty());
+            assertTrue(new File(comicDir, "left.jpg").exists());
+            assertTrue(new File(comicDir, "down.jpg").exists());
+            assertTrue(new File(comicDir, "right.jpg").exists());
+            assertTrue(new File(comicDir, "up.jpg").exists());
+        });
+    }
+
+    @Test
+    public void testThisShouldNotBeFlattened() {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/comic 1/up.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/comic 1/right.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/comic 2/down.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/comic 2/left.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/comic 2/z-left.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/comic 2/bar.txt");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/this is only trash/baz.txt");
+            sb.copyResource("/uncompressed/up.jpg", "comic/whatever/this is only trash/some nerd.jpg");
+
+            var packCommand = new PackCommand();
+            packCommand.setDisableProgressBar(true);
+            packCommand.setGarbageCollector(true);
+            packCommand.run(sandbox.toPath());
+
+            // After unpacking, we should have only the 4 images directly in the 'Comic' directory
+            var unpackCommand = new UnpackCommand();
+            unpackCommand.setDisableProgressBar(true);
+            unpackCommand.run(sandbox.toPath());
+
+            var comicDir = new File(sandbox, "Comic");
+            assertTrue(comicDir.exists());
+            assertTrue(comicDir.isDirectory());
+
+            // We should have kept all the children
+            var whateverFile = new File(comicDir, "whatever");
+            assertTrue(whateverFile.exists());
+            var comic1 = new File(whateverFile, "comic 1");
+            assertTrue(comic1.exists());
+            var comic2 = new File(whateverFile, "comic 2");
+            assertTrue(comic2.exists());
+
+            assertTrue(new File(comic1, "right.jpg").exists());
+            assertTrue(new File(comic1, "up.jpg").exists());
+            assertTrue(new File(comic2, "left.jpg").exists());
+            assertTrue(new File(comic2, "down.jpg").exists());
+            assertFalse(new File(comic2, "bar.txt").exists());
+            assertFalse(new File(comic2, "z-left.jpg").exists());
+        });
+    }
 }
