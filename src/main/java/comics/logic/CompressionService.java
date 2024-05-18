@@ -11,6 +11,9 @@ import java.nio.file.Files;
 
 public class CompressionService {
 
+    public static final String[] DEFAULT_FILE_EXCLUSIONS = new String[] { "txt", "xml", "db", "nfo" };
+    static final String[] DEFAULT_DIRECTORY_EXCLUSIONS = new String[] { "__MACOSX" };
+
     public CompressionService() { }
 
     // 7z is in the path and accessible
@@ -85,8 +88,9 @@ public class CompressionService {
                 cwd(directory).
                 command("7z").
                 parameter("a").
-                parameter("-tzip").
-                parameter("-xr!__MACOSX");
+                parameter("-tzip");
+            for (String dir: DEFAULT_DIRECTORY_EXCLUSIONS)
+                builder.parameter("-xr!" + dir);
             if (exclusions != null)
                 for (var exclusion: exclusions) builder.parameter("-xr!*." + exclusion);
             var result = builder.parameter(targetFile.getAbsolutePath()).

@@ -8,7 +8,7 @@ import comics.logic.PdfService;
 
 import java.nio.file.Path;
 
-import static comics.commands.PackCommand.DEFAULT_EXCLUSIONS;
+import static comics.logic.CompressionService.DEFAULT_FILE_EXCLUSIONS;
 import static comics.utils.Utils.commonChecks;
 
 @Command(
@@ -36,7 +36,7 @@ public class Pdf2CbzCommand {
             f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("pdf")),
             f -> {
                 var directory = new PdfService().convertPDF(f, format);
-                new CompressionService().compressComic(directory, DEFAULT_EXCLUSIONS);
+                new CompressionService().compressComic(directory, DEFAULT_FILE_EXCLUSIONS);
             }
         );
     }

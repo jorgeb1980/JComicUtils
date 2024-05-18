@@ -5,12 +5,11 @@ import cli.annotations.Parameter;
 import cli.annotations.Run;
 import comics.logic.CompressionService;
 import comics.logic.RepeatedNamesValidator;
-import org.apache.pdfbox.contentstream.operator.graphics.CurveToReplicateFinalPoint;
 
 import java.io.File;
 import java.nio.file.Path;
 
-import static comics.commands.PackCommand.DEFAULT_EXCLUSIONS;
+import static comics.logic.CompressionService.DEFAULT_FILE_EXCLUSIONS;
 import static comics.utils.Utils.commonChecks;
 
 @Command(command = "repack", description = "Unpacks every cbz/cbr file under CWD and repacks them into .cbz files")
@@ -36,7 +35,7 @@ public class RepackCommand {
                 );
                 var compressionService = new CompressionService();
                 compressionService.decompressComic(f);
-                compressionService.compressComic(expectedDirectory, all ? null : DEFAULT_EXCLUSIONS);
+                compressionService.compressComic(expectedDirectory, all ? null : DEFAULT_FILE_EXCLUSIONS);
             },
             new RepeatedNamesValidator()
         );

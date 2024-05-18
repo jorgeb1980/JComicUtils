@@ -9,12 +9,11 @@ import comics.logic.RepeatedNamesValidator;
 import java.io.File;
 import java.nio.file.Path;
 
+import static comics.logic.CompressionService.DEFAULT_FILE_EXCLUSIONS;
 import static comics.utils.Utils.commonChecks;
 
 @Command(command="pack", description="Packs every sub-directory under CWD into a .cbz file")
 public class PackCommand {
-
-    public static final String[] DEFAULT_EXCLUSIONS = new String[] { "txt", "xml", "db", "nfo" };
 
     @Parameter(name="a", longName="all", description="If set, the command will include non-image files in the comics")
     public Boolean all = false;
@@ -29,7 +28,7 @@ public class PackCommand {
         commonChecks(disableProgressBar);
         return new GenericFileListOperation(cwd, "Packing comics...").execute(
             File::isDirectory,
-            dir -> new CompressionService().compressComic(dir, all ? null : DEFAULT_EXCLUSIONS),
+            dir -> new CompressionService().compressComic(dir, all ? null : DEFAULT_FILE_EXCLUSIONS),
             new RepeatedNamesValidator()
         );
     }

@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import static comics.commands.PackCommand.DEFAULT_EXCLUSIONS;
+import static comics.logic.CompressionService.DEFAULT_FILE_EXCLUSIONS;
 import static comics.utils.Tools.TestLevel.COMMAND;
 import static comics.utils.Tools.TestLevel.SERVICE;
 import static comics.utils.Tools.createNewFile;
@@ -108,7 +108,7 @@ public class TestPack {
             }
             if (level == SERVICE) {
                 var compressionService = new CompressionService();
-                compressionService.compressComic(childDirectory, DEFAULT_EXCLUSIONS);
+                compressionService.compressComic(childDirectory, DEFAULT_FILE_EXCLUSIONS);
             } else if (level == COMMAND) {
                 var packCommand = new PackCommand();
                 packCommand.setDisableProgressBar(true);
