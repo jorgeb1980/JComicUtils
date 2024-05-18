@@ -119,7 +119,9 @@ public class TestPack {
                 originalData.keySet().stream().filter(s -> !s.endsWith("txt")).toList().size(),
                 emptyIfNull(newChildDirectory.listFiles()).length
             );
-            assertTrue(Arrays.stream(emptyIfNull(newChildDirectory.listFiles())).filter(s -> s.getName().endsWith("txt")).toList().isEmpty());
+            assertTrue(Arrays.stream(emptyIfNull(newChildDirectory.listFiles())).filter(
+                s -> s.getName().endsWith("txt")
+            ).toList().isEmpty());
             for (var f: emptyIfNull(newChildDirectory.listFiles())) {
                 assertEquals(originalData.get(f.getName()), md5(f));
             }
