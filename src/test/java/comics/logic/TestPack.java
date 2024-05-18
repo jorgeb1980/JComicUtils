@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import static comics.commands.PackCommand.DEFAULT_EXCLUSIONS;
 import static comics.utils.Tools.TestLevel.COMMAND;
 import static comics.utils.Tools.TestLevel.SERVICE;
 import static comics.utils.Tools.createNewFile;
@@ -43,7 +44,10 @@ public class TestPack {
                 "up.jpg",
                 "right.jpg",
                 "down.jpg",
-                "left.jpg"
+                "left.jpg",
+                "something.nfo",
+                "thumbs.db",
+                "should_not_be_here.xml"
             ).forEach(s -> sb.copyResource("/uncompressed/" + s, childDirectory.getName() + "/" + s));
             // Remember the directory
             var originalData = new HashMap<String, String>();
@@ -91,7 +95,10 @@ public class TestPack {
                 "up.jpg",
                 "right.jpg",
                 "down.jpg",
-                "left.jpg"
+                "left.jpg",
+                "something.nfo",
+                "thumbs.db",
+                "should_not_be_here.xml"
             ).forEach(s -> sb.copyResource("/uncompressed/" + s, childDirectory.getName() + "/" + s));
             // Remember the directory
             var originalData = new HashMap<String, String>();
@@ -100,7 +107,7 @@ public class TestPack {
             }
             if (level == SERVICE) {
                 var compressionService = new CompressionService();
-                compressionService.compressComic(childDirectory, "txt");
+                compressionService.compressComic(childDirectory, DEFAULT_EXCLUSIONS);
             } else if (level == COMMAND) {
                 var packCommand = new PackCommand();
                 packCommand.setDisableProgressBar(true);
@@ -116,11 +123,11 @@ public class TestPack {
             assertFalse(comicFile.exists());
             assertTrue(newChildDirectory.exists());
             assertEquals(
-                originalData.keySet().stream().filter(s -> !s.endsWith("txt")).toList().size(),
+                originalData.keySet().stream().filter(s -> s.endsWith("jpg")).toList().size(),
                 emptyIfNull(newChildDirectory.listFiles()).length
             );
             assertTrue(Arrays.stream(emptyIfNull(newChildDirectory.listFiles())).filter(
-                s -> s.getName().endsWith("txt")
+                s -> !s.getName().endsWith("jpg")
             ).toList().isEmpty());
             for (var f: emptyIfNull(newChildDirectory.listFiles())) {
                 assertEquals(originalData.get(f.getName()), md5(f));
