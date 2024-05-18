@@ -34,6 +34,14 @@ public record GenericFileListOperation(
         FileSelector selector,
         CommandProcessor processor
     ) {
+        return execute(selector, processor, null);
+    }
+
+    int execute(
+        FileSelector selector,
+        CommandProcessor processor,
+        FileValidator validator
+    ) {
         var ret = 0;
         try {
             assert cwd != null : "Please run the command on a non-null directory";
@@ -41,6 +49,10 @@ public record GenericFileListOperation(
 
             var errors = new Hashtable<File, Exception>();
             var entries = Arrays.stream(emptyIfNull(cwd.toFile().listFiles())).filter(selector::filter).toList();
+            if (validator != null) {
+                entries.forEach(validator::readFile);
+                validator.validate();
+            }
             try (var myPool = new ForkJoinPool(8)) {
                 var counter = new AtomicInteger(0);
                 myPool.submit(() ->
@@ -74,7 +86,7 @@ public record GenericFileListOperation(
                     )
                 );
         } catch (Throwable e) {
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
             ret = -1;
         }
         return ret;

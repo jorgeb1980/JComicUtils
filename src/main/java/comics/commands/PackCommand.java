@@ -4,6 +4,7 @@ import cli.annotations.Command;
 import cli.annotations.Parameter;
 import cli.annotations.Run;
 import comics.logic.CompressionService;
+import comics.logic.RepeatedNamesValidator;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -28,7 +29,8 @@ public class PackCommand {
         commonChecks(disableProgressBar);
         return new GenericFileListOperation(cwd, "Packing comics...").execute(
             File::isDirectory,
-            dir -> new CompressionService().compressComic(dir, all ? null : DEFAULT_EXCLUSIONS)
+            dir -> new CompressionService().compressComic(dir, all ? null : DEFAULT_EXCLUSIONS),
+            new RepeatedNamesValidator()
         );
     }
 }

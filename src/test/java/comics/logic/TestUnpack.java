@@ -141,7 +141,7 @@ public class TestUnpack {
                 var result = command.run(null);
                 assertNotEquals(0, result);
             });
-            assertTrue(ctx.out().contains("run the command on a non-null directory"));
+            assertTrue(ctx.err().contains("run the command on a non-null directory"));
         });
     }
 

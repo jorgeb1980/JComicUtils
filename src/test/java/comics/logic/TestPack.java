@@ -178,4 +178,19 @@ public class TestPack {
             }
         });
     }
+
+    @Test
+    public void testPreventRepeatedFiles() {
+        var sb = sandbox();
+        var ctx = sb.runTest((File sandbox) -> {
+            sb.copyResource("/uncompressed/up.jpg", "some directory [by some guy]/up.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "some directory/up.jpg");
+            var packCommand = new PackCommand();
+            packCommand.setDisableProgressBar(true);
+            return packCommand.run(sandbox.toPath());
+        }, true);
+        assertTrue(
+            ctx.err().contains(String.format("The following files have a naming conflict:%nSome Directory"))
+        );
+    }
 }
