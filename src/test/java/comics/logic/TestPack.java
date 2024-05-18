@@ -224,7 +224,7 @@ public class TestPack {
             packCommand.setDisableProgressBar(true);
             packCommand.run(sandbox.toPath());
 
-            assertTrue(new File(sandbox, "comic.cbz").exists());
+            assertTrue(new File(sandbox, "Comic.cbz").exists());
             assertFalse(baseDir.exists());
 
             // Unpack comic
