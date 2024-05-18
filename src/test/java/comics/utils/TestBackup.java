@@ -1,13 +1,19 @@
 package comics.utils;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import shell.OSDetection;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.List;
 
 import static comics.utils.Tools.sandbox;
+import static java.util.Calendar.DAY_OF_YEAR;
+import static java.util.Calendar.YEAR;
 import static java.util.List.of;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -69,6 +75,36 @@ public class TestBackup {
                 Files.createSymbolicLink(symlink.toPath(), realFile.toPath());
                 assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(symlink));
             }
+        });
+    }
+
+    @Test
+    public void testCleanup() {
+        sandbox().runTest((File sandbox) -> {
+            var sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+            var cal1 = Calendar.getInstance();
+            cal1.add(YEAR, -1);
+            var aYearAgo = cal1.getTime();
+            var cal2 = Calendar.getInstance();
+            cal2.add(DAY_OF_YEAR, -8);
+            var eightDaysAgo = cal2.getTime();
+            var cal3 = Calendar.getInstance();
+            cal3.add(DAY_OF_YEAR, -6);
+            var sixDaysAgo = cal3.getTime();
+
+            var backupDir = new File(sandbox, ".comicutils");
+            List.of(aYearAgo, eightDaysAgo, sixDaysAgo).forEach(d ->
+                new File(backupDir, sdf.format(d)).mkdirs()
+            );
+            List.of(aYearAgo, eightDaysAgo, sixDaysAgo).forEach(d ->
+                Assertions.assertTrue(new File(backupDir, sdf.format(d)).exists())
+            );
+            // This should clean the backup directory
+            new BackupService();
+            assertFalse(new File(backupDir, sdf.format(aYearAgo)).exists());
+            assertFalse(new File(backupDir, sdf.format(eightDaysAgo)).exists());
+            assertTrue(new File(backupDir, sdf.format(sixDaysAgo)).exists());
         });
     }
 }

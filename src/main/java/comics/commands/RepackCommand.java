@@ -4,11 +4,12 @@ import cli.annotations.Command;
 import cli.annotations.Parameter;
 import cli.annotations.Run;
 import comics.logic.CompressionService;
+import comics.logic.RepeatedNamesValidator;
 
 import java.io.File;
 import java.nio.file.Path;
 
-import static comics.commands.PackCommand.DEFAULT_EXCLUSIONS;
+import static comics.logic.CompressionService.DEFAULT_FILE_EXCLUSIONS;
 import static comics.utils.Utils.commonChecks;
 
 @Command(command = "repack", description = "Unpacks every cbz/cbr file under CWD and repacks them into .cbz files")
@@ -22,8 +23,16 @@ public class RepackCommand {
     public Boolean disableProgressBar = false;
     public void setDisableProgressBar(Boolean disable) { disableProgressBar = disable; }
 
+    @Parameter(
+        name="gc",
+        longName="garbage-collector",
+        description="If set, it will attempt to remove images that do not belong to the comic"
+    )
+    public Boolean garbageCollector = false;
+    public void setGarbageCollector(Boolean gc) { garbageCollector = gc; }
+
     @Run
-    public int execute(Path cwd) throws Exception {
+    public int run(Path cwd) throws Exception {
         commonChecks(disableProgressBar);
         return new GenericFileListOperation(cwd, "Repacking comics...").execute(
             f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("cbz") || f.getName().toLowerCase().endsWith("cbr")),
@@ -34,8 +43,9 @@ public class RepackCommand {
                 );
                 var compressionService = new CompressionService();
                 compressionService.decompressComic(f);
-                compressionService.compressComic(expectedDirectory, all ? null : DEFAULT_EXCLUSIONS);
-            }
+                compressionService.compressComic(expectedDirectory, garbageCollector, all ? null : DEFAULT_FILE_EXCLUSIONS);
+            },
+            new RepeatedNamesValidator()
         );
     }
 }

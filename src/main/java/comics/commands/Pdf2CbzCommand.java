@@ -8,7 +8,7 @@ import comics.logic.PdfService;
 
 import java.nio.file.Path;
 
-import static comics.commands.PackCommand.DEFAULT_EXCLUSIONS;
+import static comics.logic.CompressionService.DEFAULT_FILE_EXCLUSIONS;
 import static comics.utils.Utils.commonChecks;
 
 @Command(
@@ -30,13 +30,13 @@ public class Pdf2CbzCommand {
     public void setDisableProgressBar(Boolean disable) { disableProgressBar = disable; }
 
     @Run
-    public int execute(Path cwd) throws Exception {
+    public int run(Path cwd) throws Exception {
         commonChecks(disableProgressBar);
         return new GenericFileListOperation(cwd, "Converting pdf files...").execute(
             f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("pdf")),
             f -> {
                 var directory = new PdfService().convertPDF(f, format);
-                new CompressionService().compressComic(directory, DEFAULT_EXCLUSIONS);
+                new CompressionService().compressComic(directory, false, DEFAULT_FILE_EXCLUSIONS);
             }
         );
     }

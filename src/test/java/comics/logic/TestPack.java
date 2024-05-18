@@ -1,6 +1,7 @@
 package comics.logic;
 
 import comics.commands.PackCommand;
+import comics.commands.UnpackCommand;
 import comics.utils.Tools.TestLevel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,6 +14,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import static comics.logic.CompressionService.DEFAULT_FILE_EXCLUSIONS;
 import static comics.utils.Tools.TestLevel.COMMAND;
 import static comics.utils.Tools.TestLevel.SERVICE;
 import static comics.utils.Tools.createNewFile;
@@ -43,7 +45,10 @@ public class TestPack {
                 "up.jpg",
                 "right.jpg",
                 "down.jpg",
-                "left.jpg"
+                "left.jpg",
+                "something.nfo",
+                "thumbs.db",
+                "should_not_be_here.xml"
             ).forEach(s -> sb.copyResource("/uncompressed/" + s, childDirectory.getName() + "/" + s));
             // Remember the directory
             var originalData = new HashMap<String, String>();
@@ -52,7 +57,7 @@ public class TestPack {
             }
             if (level == SERVICE) {
                 var compressionService = new CompressionService();
-                compressionService.compressComic(childDirectory);
+                compressionService.compressComic(childDirectory, false);
             } else if (level == COMMAND) {
                 var packCommand = new PackCommand();
                 packCommand.setAll(true);
@@ -91,7 +96,10 @@ public class TestPack {
                 "up.jpg",
                 "right.jpg",
                 "down.jpg",
-                "left.jpg"
+                "left.jpg",
+                "something.nfo",
+                "thumbs.db",
+                "should_not_be_here.xml"
             ).forEach(s -> sb.copyResource("/uncompressed/" + s, childDirectory.getName() + "/" + s));
             // Remember the directory
             var originalData = new HashMap<String, String>();
@@ -100,7 +108,7 @@ public class TestPack {
             }
             if (level == SERVICE) {
                 var compressionService = new CompressionService();
-                compressionService.compressComic(childDirectory, "txt");
+                compressionService.compressComic(childDirectory, false, DEFAULT_FILE_EXCLUSIONS);
             } else if (level == COMMAND) {
                 var packCommand = new PackCommand();
                 packCommand.setDisableProgressBar(true);
@@ -116,10 +124,12 @@ public class TestPack {
             assertFalse(comicFile.exists());
             assertTrue(newChildDirectory.exists());
             assertEquals(
-                originalData.keySet().stream().filter(s -> !s.endsWith("txt")).toList().size(),
+                originalData.keySet().stream().filter(s -> s.endsWith("jpg")).toList().size(),
                 emptyIfNull(newChildDirectory.listFiles()).length
             );
-            assertTrue(Arrays.stream(emptyIfNull(newChildDirectory.listFiles())).filter(s -> s.getName().endsWith("txt")).toList().isEmpty());
+            assertTrue(Arrays.stream(emptyIfNull(newChildDirectory.listFiles())).filter(
+                s -> !s.getName().endsWith("jpg")
+            ).toList().isEmpty());
             for (var f: emptyIfNull(newChildDirectory.listFiles())) {
                 assertEquals(originalData.get(f.getName()), md5(f));
             }
@@ -142,7 +152,7 @@ public class TestPack {
             ).forEach(s -> sb.copyResource("/uncompressed/" + s));
             if (level == SERVICE) {
                 var compressionService = new CompressionService();
-                compressionService.compressComic(childDirectory, "txt");
+                compressionService.compressComic(childDirectory, false, "txt");
             } else if (level == COMMAND) {
                 var packCommand = new PackCommand();
                 packCommand.setDisableProgressBar(true);
@@ -165,17 +175,99 @@ public class TestPack {
         var sb = sandbox();
         sb.runTest((File sandbox) -> {
             var service = new CompressionService();
-            assertThrows(CompressionException.class, () -> service.compressComic(null));
-            assertThrows(CompressionException.class, () -> service.compressComic(new File("does not exist")));
+            assertThrows(CompressionException.class, () -> service.compressComic(null, false));
+            assertThrows(
+                CompressionException.class,
+                () -> service.compressComic(new File("does not exist"), false)
+            );
             // Must be a directory
             var realFile = new File(sandbox, "realFile");
             createNewFile(realFile);
-            assertThrows(CompressionException.class, () -> service.compressComic(realFile));
+            assertThrows(CompressionException.class, () -> service.compressComic(realFile, false));
             if (!OSDetection.isWindows()) {
                 var symlink = new File(sandbox, "symlink");
                 Files.createSymbolicLink(symlink.toPath(), realFile.toPath());
-                assertThrows(CompressionException.class, () -> service.compressComic(symlink));
+                assertThrows(CompressionException.class, () -> service.compressComic(symlink, false));
             }
+        });
+    }
+
+    @Test
+    public void testPreventRepeatedFiles() {
+        var sb = sandbox();
+        var ctx = sb.runTest((File sandbox) -> {
+            sb.copyResource("/uncompressed/up.jpg", "some directory [by some guy]/up.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "some directory/up.jpg");
+            var packCommand = new PackCommand();
+            packCommand.setDisableProgressBar(true);
+            var ret = packCommand.run(sandbox.toPath());
+            // The directories have not been removed
+            assertTrue(new File(sandbox, "some directory [by some guy]").exists());
+            assertTrue(new File(sandbox, "some directory").exists());
+            return ret;
+        }, true);
+        assertTrue(
+            ctx.err().contains(String.format("The following files have a naming conflict:%nSome Directory"))
+        );
+    }
+
+    @Test
+    public void testRemoveUndesiredDirectories() {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            var baseDir = new File(sandbox, "comic");
+            mkdir(baseDir);
+            sb.copyResource("/uncompressed/up.jpg", baseDir.getName() + "/up.jpg");
+
+            var undesiredDir = new File(baseDir, "__MACOSX");
+            mkdir(undesiredDir);
+
+            // Compress comic
+            var packCommand = new PackCommand();
+            packCommand.setDisableProgressBar(true);
+            packCommand.run(sandbox.toPath());
+
+            assertTrue(new File(sandbox, "Comic.cbz").exists());
+            assertFalse(baseDir.exists());
+
+            // Unpack comic
+            var unpackCommand = new UnpackCommand();
+            unpackCommand.setDisableProgressBar(true);
+            unpackCommand.run(sandbox.toPath());
+
+            var newBaseDir = new File(sandbox, "Comic");
+            assertTrue(newBaseDir.exists());
+            assertTrue(new File(newBaseDir, "up.jpg").exists());
+            assertFalse(new File(newBaseDir, "__MACOSX").exists());
+        });
+    }
+
+    @Test
+    public void testGarbageCollector() {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            sb.copyResource("/uncompressed/up.jpg", "comic/up.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/theNerdOfHell.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/z-something.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/the collaborators of.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/y sus colaboradores.jpg");
+            sb.copyResource("/uncompressed/up.jpg", "comic/club Flyer.jpg");
+
+            var packCommand = new PackCommand();
+            packCommand.setGarbageCollector(true);
+            packCommand.setDisableProgressBar(true);
+            packCommand.run(sandbox.toPath());
+
+            // After unpacking, we should only have up.jpg in the directory
+            var unpackCommand = new UnpackCommand();
+            unpackCommand.setDisableProgressBar(true);
+            unpackCommand.run(sandbox.toPath());
+
+            var newBaseDir = new File(sandbox, "Comic");
+            assertTrue(newBaseDir.exists());
+            assertTrue(newBaseDir.isDirectory());
+            assertEquals(1, newBaseDir.listFiles().length);
+            assertTrue(new File(newBaseDir, "up.jpg").exists());
         });
     }
 }
