@@ -23,12 +23,20 @@ public class PackCommand {
     public Boolean disableProgressBar = false;
     public void setDisableProgressBar(Boolean disable) { disableProgressBar = disable; }
 
+    @Parameter(
+        name="gc",
+        longName="garbage-collector",
+        description="If set, it will attempt to remove images that do not belong to the comic"
+    )
+    public Boolean garbageCollector = false;
+    public void setGarbageCollector(Boolean gc) { garbageCollector = gc; }
+
     @Run
     public int run(Path cwd) throws Exception {
         commonChecks(disableProgressBar);
         return new GenericFileListOperation(cwd, "Packing comics...").execute(
             File::isDirectory,
-            dir -> new CompressionService().compressComic(dir, all ? null : DEFAULT_FILE_EXCLUSIONS),
+            dir -> new CompressionService().compressComic(dir, garbageCollector, all ? null : DEFAULT_FILE_EXCLUSIONS),
             new RepeatedNamesValidator()
         );
     }

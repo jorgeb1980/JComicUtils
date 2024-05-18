@@ -8,11 +8,22 @@ import shell.ShellException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.regex.Pattern;
 
 public class CompressionService {
 
     public static final String[] DEFAULT_FILE_EXCLUSIONS = new String[] { "txt", "xml", "db", "nfo" };
     static final String[] DEFAULT_DIRECTORY_EXCLUSIONS = new String[] { "__MACOSX" };
+    static final String[] DEFAULT_GARBAGE_PATTERNS = new String[] {
+        "z.+",
+        ".+nerd.+",
+        ".+colab.+",
+        ".+collab.+",
+        ".+flyer.+"
+    };
 
     public CompressionService() { }
 
@@ -72,7 +83,11 @@ public class CompressionService {
      * @param exclusions Extensions of files forbidden in the final comic
      * @throws CompressionException If any pre-condition is not met or there is any failure in the I/O operation
      */
-    public void compressComic(File directory, String... exclusions) throws CompressionException {
+    public void compressComic(
+        File directory,
+        Boolean garbageCollector,
+        String... exclusions
+    ) throws CompressionException {
         try {
             assert directory != null;
             assert directory.exists();
@@ -89,6 +104,9 @@ public class CompressionService {
                 command("7z").
                 parameter("a").
                 parameter("-tzip");
+            if (garbageCollector) {
+                collectGarbage(directory, exclusions).forEach(s -> builder.parameter("-xr!" + s.getName()));
+            }
             for (String dir: DEFAULT_DIRECTORY_EXCLUSIONS)
                 builder.parameter("-xr!" + dir);
             if (exclusions != null)
@@ -99,5 +117,38 @@ public class CompressionService {
             // Zip file generated successfully - remove the original directory
             Utils.removeDirectory(directory);
         } catch (ShellException | AssertionError | IOException ioe) { throw new CompressionException(ioe); }
+    }
+
+    private List<File> collectGarbage(File directory, String... exclusions) {
+        var garbage = new LinkedList<File>();
+        var files = new LinkedList<File>();
+        files.add(directory);
+        var patterns = Arrays.stream(DEFAULT_GARBAGE_PATTERNS).map(Pattern::compile).toList();
+
+        while (!files.isEmpty()) {
+            var file = files.remove();
+            if (file.isDirectory()) {
+                files.addAll(Arrays.stream(file.listFiles()).filter(File::isDirectory).toList());
+                garbage.addAll(Arrays.stream(file.listFiles()).filter(f -> {
+                    var isGarbage = false;
+                    if (!f.isDirectory() && !isExcluded(f, exclusions)) {
+                        for (var pattern: patterns) {
+                            isGarbage |= pattern.matcher(f.getName().toLowerCase()).matches();
+                        }
+                    }
+                    return isGarbage;
+                }).toList());
+            }
+        }
+
+        return garbage;
+    }
+
+    private boolean isExcluded(File f, String... exclusions) {
+        var excluded = false;
+        for (var s: exclusions) {
+            excluded |= f.getName().toLowerCase().endsWith("." + s.toLowerCase());
+        }
+        return excluded;
     }
 }

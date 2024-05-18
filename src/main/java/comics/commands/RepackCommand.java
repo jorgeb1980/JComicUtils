@@ -23,6 +23,14 @@ public class RepackCommand {
     public Boolean disableProgressBar = false;
     public void setDisableProgressBar(Boolean disable) { disableProgressBar = disable; }
 
+    @Parameter(
+        name="gc",
+        longName="garbage-collector",
+        description="If set, it will attempt to remove images that do not belong to the comic"
+    )
+    public Boolean garbageCollector = false;
+    public void setGarbageCollector(Boolean gc) { garbageCollector = gc; }
+
     @Run
     public int run(Path cwd) throws Exception {
         commonChecks(disableProgressBar);
@@ -35,7 +43,7 @@ public class RepackCommand {
                 );
                 var compressionService = new CompressionService();
                 compressionService.decompressComic(f);
-                compressionService.compressComic(expectedDirectory, all ? null : DEFAULT_FILE_EXCLUSIONS);
+                compressionService.compressComic(expectedDirectory, garbageCollector, all ? null : DEFAULT_FILE_EXCLUSIONS);
             },
             new RepeatedNamesValidator()
         );

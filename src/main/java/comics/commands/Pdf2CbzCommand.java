@@ -36,7 +36,7 @@ public class Pdf2CbzCommand {
             f -> !f.isDirectory() && (f.getName().toLowerCase().endsWith("pdf")),
             f -> {
                 var directory = new PdfService().convertPDF(f, format);
-                new CompressionService().compressComic(directory, DEFAULT_FILE_EXCLUSIONS);
+                new CompressionService().compressComic(directory, false, DEFAULT_FILE_EXCLUSIONS);
             }
         );
     }
