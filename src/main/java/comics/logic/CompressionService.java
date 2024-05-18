@@ -80,11 +80,13 @@ public class CompressionService {
                 directory.getParentFile(),
                 new NameConverter().normalizeFileName(directory.getName() + ".cbz")
             );
+
             var builder = ShellCommandLauncher.builder().
                 cwd(directory).
                 command("7z").
                 parameter("a").
-                parameter("-tzip");
+                parameter("-tzip").
+                parameter("-xr!__MACOSX");
             if (exclusions != null)
                 for (var exclusion: exclusions) builder.parameter("-xr!*." + exclusion);
             var result = builder.parameter(targetFile.getAbsolutePath()).

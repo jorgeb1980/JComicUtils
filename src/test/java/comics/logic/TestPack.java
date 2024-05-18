@@ -1,6 +1,7 @@
 package comics.logic;
 
 import comics.commands.PackCommand;
+import comics.commands.UnpackCommand;
 import comics.utils.Tools.TestLevel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -205,5 +206,35 @@ public class TestPack {
         assertTrue(
             ctx.err().contains(String.format("The following files have a naming conflict:%nSome Directory"))
         );
+    }
+
+    @Test
+    public void testRemoveUndesiredDirectories() {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            var baseDir = new File(sandbox, "comic");
+            mkdir(baseDir);
+            sb.copyResource("/uncompressed/up.jpg", baseDir.getName() + "/up.jpg");
+
+            var undesiredDir = new File(baseDir, "__MACOSX");
+            mkdir(undesiredDir);
+
+            // Compress comic
+            var packCommand = new PackCommand();
+            packCommand.setDisableProgressBar(true);
+            packCommand.run(sandbox.toPath());
+
+            assertTrue(new File(sandbox, "comic.cbz").exists());
+            assertFalse(baseDir.exists());
+
+            // Unpack comic
+            var unpackCommand = new UnpackCommand();
+            unpackCommand.setDisableProgressBar(true);
+            unpackCommand.run(sandbox.toPath());
+
+            assertTrue(baseDir.exists());
+            assertTrue(new File(baseDir, "up.jpg").exists());
+            assertFalse(undesiredDir.exists());
+        });
     }
 }
