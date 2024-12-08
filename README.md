@@ -18,7 +18,7 @@ We need the following software (Linux instructions for Debian-like distros, plea
 
 Get it for:
 + Windows: https://adoptopenjdk.net/
-+ Linux: `sudo apt-get install openjdk-21-jre-headless`
++ Linux: `sudo apt-get install openjdk-21-jdk`
 + MacOS: `brew install openjdk@21`
 
 ### Maven
@@ -26,29 +26,14 @@ Get it for:
 Find the latest version for:
 + All platforms: https://maven.apache.org/download.cgi
 
-### 7z 16.02
-
-Tested with version:
-
-```
-7z -version
-
-7-Zip [64] 16.02 : Copyright (c) 1999-2016 Igor Pavlov : 2016-05-21
-```
-
-Get it for:
-+ Windows: https://www.7-zip.org/download.html
-+ Linux: `sudo apt install p7zip-full`
-  (maybe additional packages will be necessary, like `p7zip-rar` in certain distros)
-+ MacOS: `brew install p7zip`
-
 ## How to install
 
 ### Download and compile required libraries
 
-- Command line interaction utils: https://github.com/jorgeb1980/lib-shell-commands
-  - `git clone git@github.com:jorgeb1980/lib-shell-commands`
-  - `cd lib-shell-commands; mvn install; cd ..`
+
+- Test extensions and utils: https://github.com/jorgeb1980/lib-test-utils
+  - `git clone git@github.com:jorgeb1980/lib-test-utils`
+  - `cd lib-test-utils; mvn install; cd ..`
 - Command line application framework: https://github.com/jorgeb1980/lib-cli-base
   - `git clone git@github.com:jorgeb1980/lib-cli-base`
   - `cd lib-cli-base; mvn install; cd ..`
@@ -62,12 +47,10 @@ Get it for:
 As explained in [lib-cli-base/README.md](https://github.com/jorgeb1980/lib-cli-base/blob/master/README.md), this
 will create a structure inside `JComicUtils/target/redist` with the necessary scripts and libraries.
 
-## Adittional information
+## Additional information
 
 For more information please see:
 
 https://en.wikipedia.org/wiki/DEFLATE
-
-https://www.7-zip.org/faq.html
 
 https://pdfbox.apache.org/index.html
