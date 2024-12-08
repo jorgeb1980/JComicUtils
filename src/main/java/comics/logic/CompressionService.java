@@ -12,8 +12,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import static java.util.zip.Deflater.NO_COMPRESSION;
+import static java.util.zip.ZipOutputStream.STORED;
 
 public class CompressionService {
 
@@ -97,6 +101,8 @@ public class CompressionService {
     ) throws IOException {
         var p = Files.createFile(targetFile.toPath());
         try (var zs = new ZipOutputStream(Files.newOutputStream(p))) {
+            zs.setMethod(STORED);
+            zs.setLevel(NO_COMPRESSION);
             var pp = sourceDirectory.toPath();
             Files.walk(pp)
                 .filter(path -> !Files.isDirectory(path))
@@ -104,6 +110,13 @@ public class CompressionService {
                     if (!isExcluded(path.toFile(), extensionsExcluded)
                             && !specificExclusions.contains(path.toFile())) {
                         var zipEntry = new ZipEntry(pp.relativize(path).toString());
+                        // Set all the necessary properties for STORED
+                        zipEntry.setSize(path.toFile().length());
+                        zipEntry.setCompressedSize(path.toFile().length());
+                        var crc = new CRC32();
+                        try { crc.update(Files.readAllBytes(path)); }
+                        catch (IOException e) { LogUtils.getDefaultLogger().severe(e.getMessage()); }
+                        zipEntry.setCrc(crc.getValue());
                         try {
                             zs.putNextEntry(zipEntry);
                             Files.copy(path, zs);

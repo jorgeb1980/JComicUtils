@@ -3,8 +3,8 @@ Scripts intended for management of a comics collection
 
 ## Scripts
 
-+ *repack.[bat|sh]* - will repack any .cbz and .cbr file in `cwd` into a .cbz comic packed with DEFLATE.  This is compatible with most of the older readers I use, like CDisplay.
-+ *pdf2cbz.[bat|sh]* - will convert every PDF in `cwd` into a .cbz comic packed with DEFLATE.
++ *repack.[bat|sh]* - will repack any .cbz and .cbr file in `cwd` into a .cbz comic.  The chosen format is compatible with most of the older readers I use, like CDisplay.
++ *pdf2cbz.[bat|sh]* - will convert every PDF in `cwd` into a .cbz comic.
 + *unpack.[bat|sh]* - will extract the content of all the comics in `cwd` into a directory with the same name.  Optional *-extension* parameter.
 + *pack.[bat|sh]* - will make a .cbz file out of any child folder under `cwd`.
 
@@ -46,11 +46,3 @@ Find the latest version for:
 
 As explained in [lib-cli-base/README.md](https://github.com/jorgeb1980/lib-cli-base/blob/master/README.md), this
 will create a structure inside `JComicUtils/target/redist` with the necessary scripts and libraries.
-
-## Additional information
-
-For more information please see:
-
-https://en.wikipedia.org/wiki/DEFLATE
-
-https://pdfbox.apache.org/index.html
