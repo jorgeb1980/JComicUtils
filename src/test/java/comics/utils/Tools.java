@@ -17,7 +17,7 @@ public class Tools {
     public enum TestLevel { SERVICE, COMMAND; }
 
     public static String today() {
-        return new SimpleDateFormat("yyyy-MM-dd").format( new Date());
+        return new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     }
 
     public static Sandbox sandbox() {
