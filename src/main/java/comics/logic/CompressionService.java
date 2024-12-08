@@ -2,7 +2,8 @@ package comics.logic;
 
 import comics.utils.BackupService;
 import comics.utils.Utils;
-import shell.ShellCommandLauncher;
+import shell.CommandLauncher;
+import shell.ExecutionResults;
 import shell.ShellException;
 
 import java.io.File;
@@ -27,19 +28,6 @@ public class CompressionService {
     };
 
     public CompressionService() { }
-
-    // 7z is in the path and accessible
-    public boolean check() {
-        var ret = false;
-        try {
-            var result = ShellCommandLauncher.builder().command("7z").parameter("--help").build().launch();
-            if (result.getExitCode() == 0) {
-                ret = true;
-            }
-        } catch (Exception e) { e.printStackTrace(); }
-        return ret;
-    }
-
     /**
      * Runs 7z to extract the comic file contents into a directory with the same name
      * @param comicFile Not null, existing, non-directory, non-symlink, 7z-compatible compressed file into a directory
@@ -60,19 +48,10 @@ public class CompressionService {
             );
             assert !targetDirectory.exists() : String.format("Cannot decompress %s - there is something in the way", comicFile);;
 
-            var result = ShellCommandLauncher.builder().
-                cwd(comicFile.getParentFile()).
-                command("7z").
-                parameter("e").
-                parameter(comicFile.getAbsolutePath()).
-                parameter("-o" + targetDirectory.getAbsolutePath()).
-                parameter("*").
-                parameter("-r").
-                parameter("-spf").build().launch();
-            if (result.getExitCode() != 0) throw new CompressionException(result);
+            SevenZipService.INSTANCE.extractFile(comicFile, targetDirectory);
             // If successful, backup the file
             new BackupService().backupFile(comicFile);
-        } catch (IOException | ShellException | AssertionError e) {
+        } catch (IOException | AssertionError e) {
             throw new CompressionException(e);
         }
     }
@@ -104,23 +83,31 @@ public class CompressionService {
             // Detect trivial nesting case:
             // Single subdirectory below root with every image hanging from there
             var finalDirectory = searchForTrivialNestingCase(directory, garbage, exclusions);
-
-            var builder = ShellCommandLauncher.builder().
-                cwd(finalDirectory).
-                command("7z").
-                parameter("a").
-                parameter("-tzip");
-                garbage.forEach(s -> builder.parameter("-xr!" + s.getName()));
-            for (String dir: DEFAULT_DIRECTORY_EXCLUSIONS)
-                builder.parameter("-xr!" + dir);
-            if (exclusions != null)
-                for (var exclusion: exclusions) builder.parameter("-xr!*." + exclusion);
-            var result = builder.parameter(targetFile.getAbsolutePath()).
-                parameter("*").build().launch();
+            var result = compressFile(exclusions, finalDirectory, garbage, targetFile);
             if (result.getExitCode() != 0) throw new CompressionException(result);
             // Zip file generated successfully - remove the original directory
             Utils.removeDirectory(directory);
         } catch (ShellException | AssertionError | IOException ioe) { throw new CompressionException(ioe); }
+    }
+
+    private static ExecutionResults compressFile(
+        String[] extensionsExcluded,
+        File targetDirectory,
+        List<File> garbage,
+        File targetFile
+    ) throws ShellException {
+        var builder = CommandLauncher.builder().
+            cwd(targetDirectory).
+            program("7z").
+            parameter("a").
+            parameter("-tzip");
+        garbage.forEach(s -> builder.parameter("-xr!" + s.getName()));
+        for (String dir: DEFAULT_DIRECTORY_EXCLUSIONS)
+            builder.parameter("-xr!" + dir);
+        if (extensionsExcluded != null)
+            for (var exclusion: extensionsExcluded) builder.parameter("-xr!*." + exclusion);
+        return builder.parameter(targetFile.getAbsolutePath()).
+            parameter("*").build().launch();
     }
 
     // Searches for every image file in the directory and, if all of them are in the same place, it will

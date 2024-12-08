@@ -31,11 +31,6 @@ import static test.CaptureOutput.captureOutput;
 
 public class TestUnpack {
 
-    @Test
-    public void is7zAvailable() {
-        assertTrue(new CompressionService().check());
-    }
-
     @ParameterizedTest
     @EnumSource(TestLevel.class)
     public void testUnpackCbz(TestLevel level) {
