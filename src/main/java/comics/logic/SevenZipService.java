@@ -1,14 +1,13 @@
 package comics.logic;
 
+import cli.LogUtils;
 import net.sf.sevenzipjbinding.*;
 import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,15 +17,15 @@ public enum SevenZipService {
 
     INSTANCE;
 
-    private final Logger LOGGER = Logger.getLogger(SevenZipService.class.getName());
+    private final Logger LOGGER = LogUtils.getDefaultLogger();
 
     SevenZipService() {
         try {
             SevenZip.initSevenZipFromPlatformJAR();
-            LOGGER.info("7-Zip-JBinding library was initialized");
-            LOGGER.info(SevenZip.getPlatformBestMatch() + " - " + SevenZip.getSevenZipJBindingVersion());
+            LOGGER.finest("7-Zip-JBinding library was initialized");
+            LOGGER.finest(SevenZip.getPlatformBestMatch() + " - " + SevenZip.getSevenZipJBindingVersion());
             var nativeVersion = SevenZip.getSevenZipVersion();
-            LOGGER.info("Using native library " + nativeVersion.version);
+            LOGGER.finest("Using native library " + nativeVersion.version);
         } catch (SevenZipNativeInitializationException e) {
             LOGGER.severe("Cannot seem to initialize 7-Zip native binding");
             LOGGER.severe(e.getMessage());
@@ -45,8 +44,8 @@ public enum SevenZipService {
             )
         ) {
 
-            LOGGER.info("   Hash   |    Size    | Filename");
-            LOGGER.info("----------+------------+---------");
+            LOGGER.finest("   Hash   |    Size    | Filename");
+            LOGGER.finest("----------+------------+---------");
 
             int count = inArchive.getNumberOfItems();
             List<Integer> itemsToExtract = new ArrayList<>();
@@ -70,18 +69,21 @@ public enum SevenZipService {
         }
     }
 
-    private Path prepareTarget(File root, String path) {
-        var file = new File(root, path);
-        if (!file.getParentFile().mkdirs()) LOGGER.severe(String.format("Problems creating %s", file.getAbsolutePath()));
-        return file.toPath();
-    }
-
     private class ExtractCallback implements IArchiveExtractCallback {
         private int hash = 0;
         private int size = 0;
         private int index;
         private final IInArchive inArchive;
         private final File targetDirectory;
+
+        private File prepareTarget(File root, String path) {
+            File targetFile = new File(root, path);
+            try {
+                targetFile.getParentFile().mkdirs();
+                targetFile.createNewFile();
+            } catch (IOException ioe) { LOGGER.severe(ioe.getMessage()); }
+            return targetFile;
+        }
 
         public ExtractCallback(File targetDirectory, IInArchive inArchive) {
             this.inArchive = inArchive;
@@ -96,14 +98,16 @@ public enum SevenZipService {
             if (extractAskMode != ExtractAskMode.EXTRACT) {
                 return null;
             }
+
+            final var path = inArchive.getProperty(index, PropID.PATH).toString();
+            final var targetFile = prepareTarget(targetDirectory, path);
             return data -> {
-                var path = inArchive.getProperty(index, PropID.PATH).toString();
                 hash ^= Arrays.hashCode(data);
                 size += data.length;
                 // Write the file in the expected path
-                var target = prepareTarget(targetDirectory, path);
-                try { Files.copy(new ByteArrayInputStream(data), target); }
-                catch (IOException ioe) { LOGGER.severe(ioe.getMessage()); }
+                try (var os = new FileOutputStream(targetFile, true)) {
+                    os.write(data);
+                } catch (IOException ioe) { LOGGER.severe(ioe.getMessage()); }
                 return data.length; // Return amount of proceed data
             };
         }
@@ -115,7 +119,7 @@ public enum SevenZipService {
             if (extractOperationResult != ExtractOperationResult.OK) {
                 LOGGER.severe("Extraction error");
             } else {
-                LOGGER.info(
+                LOGGER.finest(
                     String.format(
                         "%9X | %10s | %s",
                         hash,

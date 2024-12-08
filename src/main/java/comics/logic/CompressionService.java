@@ -60,13 +60,13 @@ public class CompressionService {
      * Creates a zip file with the contents of an existing directory, excluding the instructed file extensions.
      * The zip file created has a normalized file name.
      * @param directory Base directory whose contents will appear in the comic
-     * @param exclusions Extensions of files forbidden in the final comic
+     * @param extensionsExcluded Extensions of files forbidden in the final comic
      * @throws CompressionException If any pre-condition is not met or there is any failure in the I/O operation
      */
     public void compressComic(
         File directory,
         Boolean garbageCollector,
-        String... exclusions
+        String... extensionsExcluded
     ) throws CompressionException {
         try {
             assert directory != null;
@@ -79,29 +79,29 @@ public class CompressionService {
                 new NameConverter().normalizeFileName(directory.getName() + ".cbz")
             );
 
-            var garbage = garbageCollector ? collectGarbage(directory, exclusions) : new LinkedList<File>();
+            var specificExclusions = garbageCollector ? collectGarbage(directory, extensionsExcluded) : new LinkedList<File>();
             // Detect trivial nesting case:
             // Single subdirectory below root with every image hanging from there
-            var finalDirectory = searchForTrivialNestingCase(directory, garbage, exclusions);
-            var result = compressFile(exclusions, finalDirectory, garbage, targetFile);
+            var calculatedSourceDirectory = searchForTrivialNestingCase(directory, specificExclusions, extensionsExcluded);
+            var result = compressDirectory(calculatedSourceDirectory, extensionsExcluded, specificExclusions, targetFile);
             if (result.getExitCode() != 0) throw new CompressionException(result);
             // Zip file generated successfully - remove the original directory
             Utils.removeDirectory(directory);
         } catch (ShellException | AssertionError | IOException ioe) { throw new CompressionException(ioe); }
     }
 
-    private static ExecutionResults compressFile(
+    private static ExecutionResults compressDirectory(
+        File sourceDirectory,
         String[] extensionsExcluded,
-        File targetDirectory,
-        List<File> garbage,
+        List<File> specificExclusions,
         File targetFile
     ) throws ShellException {
         var builder = CommandLauncher.builder().
-            cwd(targetDirectory).
+            cwd(sourceDirectory).
             program("7z").
             parameter("a").
             parameter("-tzip");
-        garbage.forEach(s -> builder.parameter("-xr!" + s.getName()));
+        specificExclusions.forEach(s -> builder.parameter("-xr!" + s.getName()));
         for (String dir: DEFAULT_DIRECTORY_EXCLUSIONS)
             builder.parameter("-xr!" + dir);
         if (extensionsExcluded != null)
