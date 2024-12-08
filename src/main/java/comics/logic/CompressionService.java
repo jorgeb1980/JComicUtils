@@ -31,7 +31,7 @@ public class CompressionService {
     };
 
     public CompressionService() { }
-
+  
     /**
      * Runs 7z to extract the comic file contents into a directory with the same name
      * @param comicFile Not null, existing, non-directory, non-symlink, 7z-compatible compressed file into a directory
@@ -88,6 +88,7 @@ public class CompressionService {
             // Single subdirectory below root with every image hanging from there
             var calculatedSourceDirectory = searchForTrivialNestingCase(directory, specificExclusions, extensionsExcluded);
             compressDirectory(calculatedSourceDirectory, extensionsExcluded, specificExclusions, targetFile);
+
             // Zip file generated successfully - remove the original directory
             Utils.removeDirectory(directory);
         } catch (AssertionError | IOException ioe) { throw new CompressionException(ioe); }
