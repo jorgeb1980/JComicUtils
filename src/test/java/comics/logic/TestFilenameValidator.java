@@ -13,10 +13,10 @@ public class TestFilenameValidator {
 
     @SandboxTest
     public void testDirectoriesNoRepetition(Sandbox sb) {
-        var directories = List.of("dir1", "dir2", "dir 3");
-        directories.forEach(d -> sb.copyResource("/uncompressed/up.jpg", d + "/up.jpg"));
+        var dirs = List.of("dir1", "dir2", "dir 3");
+        for (var d: dirs) sb.copyResource("/uncompressed/up.jpg", d + "/up.jpg");
         var validator = new RepeatedNamesValidator();
-        directories.forEach(d -> validator.readFile(new File(sb.getSandbox(), d)));
+        for (var d: dirs) validator.readFile(new File(sb.getSandbox(), d));
         try {
             validator.validate();
         } catch (Exception e) {
@@ -26,10 +26,10 @@ public class TestFilenameValidator {
 
     @SandboxTest
     public void testDirectoriesWithRepetition(Sandbox sb) {
-        var directories = List.of("dir 1", "dir 2", "dir 1 [by some guy]");
-        directories.forEach(d -> sb.copyResource("/uncompressed/up.jpg", d + "/up.jpg"));
+        var dirs = List.of("dir 1", "dir 2", "dir 1 [by some guy]");
+        for (var d: dirs) sb.copyResource("/uncompressed/up.jpg", d + "/up.jpg");
         var validator = new RepeatedNamesValidator();
-        directories.forEach(d -> validator.readFile(new File(sb.getSandbox(), d)));
+        for (var d: dirs) validator.readFile(new File(sb.getSandbox(), d));
         assertThrows(
             Exception.class,
             validator::validate,
