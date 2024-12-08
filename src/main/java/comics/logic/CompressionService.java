@@ -1,10 +1,8 @@
 package comics.logic;
 
+import cli.LogUtils;
 import comics.utils.BackupService;
 import comics.utils.Utils;
-import shell.CommandLauncher;
-import shell.ExecutionResults;
-import shell.ShellException;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,11 +12,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class CompressionService {
 
     public static final String[] DEFAULT_FILE_EXCLUSIONS = new String[] { "txt", "xml", "db", "nfo" };
-    static final String[] DEFAULT_DIRECTORY_EXCLUSIONS = new String[] { "__MACOSX" };
     static final String[] DEFAULT_GARBAGE_PATTERNS = new String[] {
         "z.+",
         ".+nerd.+",
@@ -28,6 +27,7 @@ public class CompressionService {
     };
 
     public CompressionService() { }
+
     /**
      * Runs 7z to extract the comic file contents into a directory with the same name
      * @param comicFile Not null, existing, non-directory, non-symlink, 7z-compatible compressed file into a directory
@@ -83,31 +83,37 @@ public class CompressionService {
             // Detect trivial nesting case:
             // Single subdirectory below root with every image hanging from there
             var calculatedSourceDirectory = searchForTrivialNestingCase(directory, specificExclusions, extensionsExcluded);
-            var result = compressDirectory(calculatedSourceDirectory, extensionsExcluded, specificExclusions, targetFile);
-            if (result.getExitCode() != 0) throw new CompressionException(result);
+            compressDirectory(calculatedSourceDirectory, extensionsExcluded, specificExclusions, targetFile);
             // Zip file generated successfully - remove the original directory
             Utils.removeDirectory(directory);
-        } catch (ShellException | AssertionError | IOException ioe) { throw new CompressionException(ioe); }
+        } catch (AssertionError | IOException ioe) { throw new CompressionException(ioe); }
     }
 
-    private static ExecutionResults compressDirectory(
+    private void compressDirectory(
         File sourceDirectory,
         String[] extensionsExcluded,
         List<File> specificExclusions,
         File targetFile
-    ) throws ShellException {
-        var builder = CommandLauncher.builder().
-            cwd(sourceDirectory).
-            program("7z").
-            parameter("a").
-            parameter("-tzip");
-        specificExclusions.forEach(s -> builder.parameter("-xr!" + s.getName()));
-        for (String dir: DEFAULT_DIRECTORY_EXCLUSIONS)
-            builder.parameter("-xr!" + dir);
-        if (extensionsExcluded != null)
-            for (var exclusion: extensionsExcluded) builder.parameter("-xr!*." + exclusion);
-        return builder.parameter(targetFile.getAbsolutePath()).
-            parameter("*").build().launch();
+    ) throws IOException {
+        var p = Files.createFile(targetFile.toPath());
+        try (var zs = new ZipOutputStream(Files.newOutputStream(p))) {
+            var pp = sourceDirectory.toPath();
+            Files.walk(pp)
+                .filter(path -> !Files.isDirectory(path))
+                .forEach(path -> {
+                    if (!isExcluded(path.toFile(), extensionsExcluded)
+                            && !specificExclusions.contains(path.toFile())) {
+                        var zipEntry = new ZipEntry(pp.relativize(path).toString());
+                        try {
+                            zs.putNextEntry(zipEntry);
+                            Files.copy(path, zs);
+                            zs.closeEntry();
+                        } catch (IOException e) {
+                            LogUtils.getDefaultLogger().severe(e.getMessage());
+                        }
+                    }
+                });
+        }
     }
 
     // Searches for every image file in the directory and, if all of them are in the same place, it will

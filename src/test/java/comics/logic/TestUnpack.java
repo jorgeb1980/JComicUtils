@@ -3,10 +3,10 @@ package comics.logic;
 import comics.commands.UnpackCommand;
 import comics.utils.Tools.TestLevel;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import shell.OSDetection;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -27,6 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.condition.OS.LINUX;
+import static org.junit.jupiter.api.condition.OS.MAC;
 import static test.CaptureOutput.captureOutput;
 
 public class TestUnpack {
@@ -157,11 +159,20 @@ public class TestUnpack {
             assertThrowsExactly(CompressionException.class, () -> service.decompressComic(newDir));
             // non existing file
             assertThrowsExactly(CompressionException.class, () -> service.decompressComic(new File(sandbox, "lalala")));
-            if (!OSDetection.isWindows()) {
-                var symlink = new File(sandbox, "symlink");
-                Files.createSymbolicLink(symlink.toPath(), comicFile.toPath());
-                assertThrowsExactly(CompressionException.class, () -> service.decompressComic(symlink));
-            }
+        });
+    }
+
+    @Test
+    @EnabledOnOs( { LINUX, MAC })
+    public void testServiceErrorsSymlinks() {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            var service = new CompressionService();
+            // Existing file
+            var comicFile = sb.copyResource("/compressed/test.cbz", "test.cbz");
+            var symlink = new File(sandbox, "symlink");
+            Files.createSymbolicLink(symlink.toPath(), comicFile.toPath());
+            assertThrowsExactly(CompressionException.class, () -> service.decompressComic(symlink));
         });
     }
 

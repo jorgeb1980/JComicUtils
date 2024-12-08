@@ -118,12 +118,6 @@
             <artifactId>cli-command-library</artifactId>
             <version>${cli.library.version}</version>
         </dependency>
-        <dependency>
-            <!-- https://github.com/jorgeb1980/lib-shell-commands -->
-            <groupId>shell</groupId>
-            <artifactId>command-launcher</artifactId>
-            <version>${shell.commands.library.version}</version>
-        </dependency>
         <!-- 7zip bindings -->
         <dependency>
             <groupId>net.sf.sevenzipjbinding</groupId>
