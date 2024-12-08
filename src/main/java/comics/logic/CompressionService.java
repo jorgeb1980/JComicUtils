@@ -2,7 +2,7 @@ package comics.logic;
 
 import comics.utils.BackupService;
 import comics.utils.Utils;
-import shell.ShellCommandLauncher;
+import shell.CommandLauncher;
 import shell.ShellException;
 
 import java.io.File;
@@ -32,7 +32,7 @@ public class CompressionService {
     public boolean check() {
         var ret = false;
         try {
-            var result = ShellCommandLauncher.builder().command("7z").parameter("--help").build().launch();
+            var result = CommandLauncher.builder().program("7z").parameter("--help").build().launch();
             if (result.getExitCode() == 0) {
                 ret = true;
             }
@@ -60,9 +60,9 @@ public class CompressionService {
             );
             assert !targetDirectory.exists() : String.format("Cannot decompress %s - there is something in the way", comicFile);;
 
-            var result = ShellCommandLauncher.builder().
+            var result = CommandLauncher.builder().
                 cwd(comicFile.getParentFile()).
-                command("7z").
+                program("7z").
                 parameter("e").
                 parameter(comicFile.getAbsolutePath()).
                 parameter("-o" + targetDirectory.getAbsolutePath()).
@@ -105,9 +105,9 @@ public class CompressionService {
             // Single subdirectory below root with every image hanging from there
             var finalDirectory = searchForTrivialNestingCase(directory, garbage, exclusions);
 
-            var builder = ShellCommandLauncher.builder().
+            var builder = CommandLauncher.builder().
                 cwd(finalDirectory).
-                command("7z").
+                program("7z").
                 parameter("a").
                 parameter("-tzip");
                 garbage.forEach(s -> builder.parameter("-xr!" + s.getName()));
