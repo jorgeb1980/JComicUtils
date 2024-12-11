@@ -1,4 +1,4 @@
-package comics.logic;
+package comics.logic.compression;
 
 import cli.LogUtils;
 import net.sf.sevenzipjbinding.*;
@@ -13,24 +13,28 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-public enum SevenZipService {
+enum SevenZipBindingService implements CompressionTool {
 
     INSTANCE;
 
     private final Logger LOGGER = LogUtils.getDefaultLogger();
+    private boolean initialized = false;
 
-    SevenZipService() {
+    SevenZipBindingService() {
         try {
             SevenZip.initSevenZipFromPlatformJAR();
             LOGGER.finest("7-Zip-JBinding library was initialized");
             LOGGER.finest(SevenZip.getPlatformBestMatch() + " - " + SevenZip.getSevenZipJBindingVersion());
             var nativeVersion = SevenZip.getSevenZipVersion();
             LOGGER.finest("Using native library " + nativeVersion.version);
+            initialized = true;
         } catch (SevenZipNativeInitializationException e) {
             LOGGER.severe("Cannot seem to initialize 7-Zip native binding");
             LOGGER.severe(e.getMessage());
         }
     }
+
+    public boolean isInitialized() { return initialized; }
 
     public void extractFile(
         final File comicFile,

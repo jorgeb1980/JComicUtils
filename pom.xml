@@ -105,6 +105,12 @@
             <artifactId>pdfbox-app</artifactId>
             <version>3.0.2</version>
         </dependency>
+        <dependency>
+            <!-- https://github.com/jorgeb1980/lib-shell-commands -->
+            <groupId>shell</groupId>
+            <artifactId>command-launcher</artifactId>
+            <version>${shell.commands.library.version}</version>
+        </dependency>
         <!-- https://github.com/ctongfei/progressbar -->
         <dependency>
             <groupId>me.tongfei</groupId>

@@ -26,6 +26,23 @@ Get it for:
 Find the latest version for:
 + All platforms: https://maven.apache.org/download.cgi
 
+### [Optional] 7z 16.02 or greater
+
+The application will fall back to command-line version of 7zip in platforms where 7ZipJBinding is not available (e.g., mac on apple silicon)
+
+Tested with version:
+
+```
+7z -version
+7-Zip [64] 16.02 : Copyright (c) 1999-2016 Igor Pavlov : 2016-05-21
+```
+
+Get it for:
++ Windows: https://www.7-zip.org/download.html
++ Linux: `sudo apt install p7zip-full`
+  (maybe additional packages will be necessary, like `p7zip-rar` in certain distros)
++ MacOS: `brew install p7zip`
+
 ## How to install
 
 ### Download and compile required libraries

@@ -1,6 +1,7 @@
 package comics.logic;
 
 import cli.LogUtils;
+import comics.logic.compression.CompressionToolFactory;
 import comics.utils.BackupService;
 import comics.utils.Utils;
 
@@ -52,7 +53,7 @@ public class CompressionService {
             );
             assert !targetDirectory.exists() : String.format("Cannot decompress %s - there is something in the way", comicFile);;
 
-            SevenZipService.INSTANCE.extractFile(comicFile, targetDirectory);
+            CompressionToolFactory.getCompressionTool().extractFile(comicFile, targetDirectory);
             // If successful, backup the file
             new BackupService().backupFile(comicFile);
         } catch (IOException | AssertionError e) {

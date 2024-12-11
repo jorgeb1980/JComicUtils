@@ -1,6 +1,5 @@
 package comics.utils;
 
-import comics.logic.CompressionService;
 import me.tongfei.progressbar.ProgressBar;
 import me.tongfei.progressbar.ProgressBarBuilder;
 import me.tongfei.progressbar.ProgressBarStyle;
