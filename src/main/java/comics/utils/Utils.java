@@ -1,6 +1,5 @@
 package comics.utils;
 
-import comics.logic.CompressionService;
 import me.tongfei.progressbar.ProgressBar;
 import me.tongfei.progressbar.ProgressBarBuilder;
 import me.tongfei.progressbar.ProgressBarStyle;
@@ -24,9 +23,6 @@ public class Utils {
         var cliLogLevel = System.getenv("CLI_LOG_LEVEL");
         if (cliLogLevel != null && !cliLogLevel.isEmpty()) {
             progressBarDisabled = (Level.parse(cliLogLevel.toUpperCase()).intValue() < SEVERE.intValue());
-        }
-        if (!new CompressionService().check()) {
-            throw new Exception("Compression engine is not ready!");
         }
     }
 

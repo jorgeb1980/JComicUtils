@@ -2,10 +2,13 @@ package comics.utils;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import shell.OSDetection;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import test.Sandbox;
+import test.sandbox.SandboxTest;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -15,11 +18,9 @@ import static comics.utils.Tools.sandbox;
 import static java.util.Calendar.DAY_OF_YEAR;
 import static java.util.Calendar.YEAR;
 import static java.util.List.of;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.condition.OS.LINUX;
+import static org.junit.jupiter.api.condition.OS.MAC;
 
 public class TestBackup {
 
@@ -60,22 +61,25 @@ public class TestBackup {
         });
     }
 
-    @Test
-    public void testErrorCases() {
-        sandbox().runTest((File sandbox) -> {
-            assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(null));
-            assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(sandbox));
-            assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(new File(sandbox, "does not exist")));
-            if (!OSDetection.isWindows()) {
-                // This requires admin permissions in windows T_T
-                File realFile = new File(sandbox, "realFile");
-                realFile.createNewFile();
-                Files.write(realFile.toPath(), "trololo".getBytes("UTF-8"));
-                File symlink = new File(sandbox, "symlink");
-                Files.createSymbolicLink(symlink.toPath(), realFile.toPath());
-                assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(symlink));
-            }
-        });
+    @SandboxTest
+    @EnabledOnOs({ LINUX, MAC })
+    public void testErrorCases(Sandbox sb) throws IOException {
+        var rootDir = sb.getSandbox();
+        // This requires admin permissions in windows T_T
+        File realFile = new File(rootDir, "realFile");
+        realFile.createNewFile();
+        Files.write(realFile.toPath(), "trololo".getBytes(StandardCharsets.UTF_8));
+        File symlink = new File(rootDir, "symlink");
+        Files.createSymbolicLink(symlink.toPath(), realFile.toPath());
+        assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(symlink));
+    }
+
+    @SandboxTest
+    public void testErrorCasesBasic(Sandbox sb) {
+        var rootDir = sb.getSandbox();
+        assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(null));
+        assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(rootDir));
+        assertThrowsExactly(AssertionError.class, () -> new BackupService().backupFile(new File(rootDir, "does not exist")));
     }
 
     @Test
