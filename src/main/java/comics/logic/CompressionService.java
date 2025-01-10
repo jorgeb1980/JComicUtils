@@ -1,9 +1,9 @@
 package comics.logic;
 
+import cli.LogUtils;
+import comics.logic.compression.CompressionToolFactory;
 import comics.utils.BackupService;
 import comics.utils.Utils;
-import shell.CommandLauncher;
-import shell.ShellException;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,11 +13,16 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static java.util.zip.Deflater.NO_COMPRESSION;
+import static java.util.zip.ZipOutputStream.STORED;
 
 public class CompressionService {
 
     public static final String[] DEFAULT_FILE_EXCLUSIONS = new String[] { "txt", "xml", "db", "nfo" };
-    static final String[] DEFAULT_DIRECTORY_EXCLUSIONS = new String[] { "__MACOSX" };
     static final String[] DEFAULT_GARBAGE_PATTERNS = new String[] {
         "z.+",
         ".+nerd.+",
@@ -27,19 +32,7 @@ public class CompressionService {
     };
 
     public CompressionService() { }
-
-    // 7z is in the path and accessible
-    public boolean check() {
-        var ret = false;
-        try {
-            var result = CommandLauncher.builder().program("7z").parameter("--help").build().launch();
-            if (result.getExitCode() == 0) {
-                ret = true;
-            }
-        } catch (Exception e) { e.printStackTrace(); }
-        return ret;
-    }
-
+  
     /**
      * Runs 7z to extract the comic file contents into a directory with the same name
      * @param comicFile Not null, existing, non-directory, non-symlink, 7z-compatible compressed file into a directory
@@ -60,19 +53,10 @@ public class CompressionService {
             );
             assert !targetDirectory.exists() : String.format("Cannot decompress %s - there is something in the way", comicFile);;
 
-            var result = CommandLauncher.builder().
-                cwd(comicFile.getParentFile()).
-                program("7z").
-                parameter("e").
-                parameter(comicFile.getAbsolutePath()).
-                parameter("-o" + targetDirectory.getAbsolutePath()).
-                parameter("*").
-                parameter("-r").
-                parameter("-spf").build().launch();
-            if (result.getExitCode() != 0) throw new CompressionException(result);
+            CompressionToolFactory.getCompressionTool().extractFile(comicFile, targetDirectory);
             // If successful, backup the file
             new BackupService().backupFile(comicFile);
-        } catch (IOException | ShellException | AssertionError e) {
+        } catch (IOException | AssertionError e) {
             throw new CompressionException(e);
         }
     }
@@ -81,13 +65,13 @@ public class CompressionService {
      * Creates a zip file with the contents of an existing directory, excluding the instructed file extensions.
      * The zip file created has a normalized file name.
      * @param directory Base directory whose contents will appear in the comic
-     * @param exclusions Extensions of files forbidden in the final comic
+     * @param extensionsExcluded Extensions of files forbidden in the final comic
      * @throws CompressionException If any pre-condition is not met or there is any failure in the I/O operation
      */
     public void compressComic(
         File directory,
         Boolean garbageCollector,
-        String... exclusions
+        String... extensionsExcluded
     ) throws CompressionException {
         try {
             assert directory != null;
@@ -100,27 +84,51 @@ public class CompressionService {
                 new NameConverter().normalizeFileName(directory.getName() + ".cbz")
             );
 
-            var garbage = garbageCollector ? collectGarbage(directory, exclusions) : new LinkedList<File>();
+            var specificExclusions = garbageCollector ? collectGarbage(directory, extensionsExcluded) : new LinkedList<File>();
             // Detect trivial nesting case:
             // Single subdirectory below root with every image hanging from there
-            var finalDirectory = searchForTrivialNestingCase(directory, garbage, exclusions);
+            var calculatedSourceDirectory = searchForTrivialNestingCase(directory, specificExclusions, extensionsExcluded);
+            compressDirectory(calculatedSourceDirectory, extensionsExcluded, specificExclusions, targetFile);
 
-            var builder = CommandLauncher.builder().
-                cwd(finalDirectory).
-                program("7z").
-                parameter("a").
-                parameter("-tzip");
-                garbage.forEach(s -> builder.parameter("-xr!" + s.getName()));
-            for (String dir: DEFAULT_DIRECTORY_EXCLUSIONS)
-                builder.parameter("-xr!" + dir);
-            if (exclusions != null)
-                for (var exclusion: exclusions) builder.parameter("-xr!*." + exclusion);
-            var result = builder.parameter(targetFile.getAbsolutePath()).
-                parameter("*").build().launch();
-            if (result.getExitCode() != 0) throw new CompressionException(result);
             // Zip file generated successfully - remove the original directory
             Utils.removeDirectory(directory);
-        } catch (ShellException | AssertionError | IOException ioe) { throw new CompressionException(ioe); }
+        } catch (AssertionError | IOException ioe) { throw new CompressionException(ioe); }
+    }
+
+    private void compressDirectory(
+        File sourceDirectory,
+        String[] extensionsExcluded,
+        List<File> specificExclusions,
+        File targetFile
+    ) throws IOException {
+        var p = Files.createFile(targetFile.toPath());
+        try (var zs = new ZipOutputStream(Files.newOutputStream(p))) {
+            zs.setMethod(STORED);
+            zs.setLevel(NO_COMPRESSION);
+            var pp = sourceDirectory.toPath();
+            Files.walk(pp)
+                .filter(path -> !Files.isDirectory(path))
+                .forEach(path -> {
+                    if (!isExcluded(path.toFile(), extensionsExcluded)
+                            && !specificExclusions.contains(path.toFile())) {
+                        var zipEntry = new ZipEntry(pp.relativize(path).toString());
+                        // Set all the necessary properties for STORED
+                        zipEntry.setSize(path.toFile().length());
+                        zipEntry.setCompressedSize(path.toFile().length());
+                        var crc = new CRC32();
+                        try { crc.update(Files.readAllBytes(path)); }
+                        catch (IOException e) { LogUtils.getDefaultLogger().severe(e.getMessage()); }
+                        zipEntry.setCrc(crc.getValue());
+                        try {
+                            zs.putNextEntry(zipEntry);
+                            Files.copy(path, zs);
+                            zs.closeEntry();
+                        } catch (IOException e) {
+                            LogUtils.getDefaultLogger().severe(e.getMessage());
+                        }
+                    }
+                });
+        }
     }
 
     // Searches for every image file in the directory and, if all of them are in the same place, it will

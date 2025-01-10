@@ -2,7 +2,7 @@ package comics.logic;
 
 import comics.commands.Pdf2CbzCommand;
 import org.junit.jupiter.api.Test;
-import shell.OSDetection;
+import org.junit.jupiter.api.condition.EnabledOnOs;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -17,6 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.condition.OS.LINUX;
+import static org.junit.jupiter.api.condition.OS.MAC;
 
 public class TestPdf {
 
@@ -44,14 +46,22 @@ public class TestPdf {
             var pdf = sb.copyResource("/compressed/test.pdf", "test.pdf");
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(pdf, null));
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(pdf, "trololololo"));
-            var dir = new File(sandbox, "childDir");
+            var dir = new File(sb.getSandbox(), "childDir");
             mkdir(dir);
             assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(dir, "jpg"));
-            if (!OSDetection.isWindows()) {
-                var symlink = new File(sandbox, "symlink");
-                Files.createSymbolicLink(symlink.toPath(), pdf.toPath());
-                assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(symlink, "jpg"));
-            }
+        });
+    }
+
+    @Test
+    @EnabledOnOs( { LINUX, MAC })
+    public void testServiceEdgeCasesSymlinks() {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            var pdfService = new PdfService();
+            var pdf = sb.copyResource("/compressed/test.pdf", "test.pdf");
+            var symlink = new File(sb.getSandbox(), "symlink");
+            Files.createSymbolicLink(symlink.toPath(), pdf.toPath());
+            assertThrowsExactly(AssertionError.class, () -> pdfService.convertPDF(symlink, "jpg"));
         });
     }
 

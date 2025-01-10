@@ -3,14 +3,15 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>comics</groupId>
     <artifactId>jcomicsutils</artifactId>
-    <version>1.6.1</version>
+    <version>2.0.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cli.library.version>1.10.0</cli.library.version>
         <shell.commands.library.version>1.7.1</shell.commands.library.version>
         <java.compiler.version>21</java.compiler.version>
-        <test.library.revision>2.0.0-SNAPSHOT</test.library.revision>
+        <sevenzip.jbinding.version>16.02-2.01</sevenzip.jbinding.version>
+        <test.library.revision>2.0.0</test.library.revision>
     </properties>
     <build>
         <resources>
@@ -104,6 +105,12 @@
             <artifactId>pdfbox-app</artifactId>
             <version>3.0.2</version>
         </dependency>
+        <dependency>
+            <!-- https://github.com/jorgeb1980/lib-shell-commands -->
+            <groupId>shell</groupId>
+            <artifactId>command-launcher</artifactId>
+            <version>${shell.commands.library.version}</version>
+        </dependency>
         <!-- https://github.com/ctongfei/progressbar -->
         <dependency>
             <groupId>me.tongfei</groupId>
@@ -116,11 +123,16 @@
             <artifactId>cli-command-library</artifactId>
             <version>${cli.library.version}</version>
         </dependency>
+        <!-- 7zip bindings -->
         <dependency>
-            <!-- https://github.com/jorgeb1980/lib-shell-commands -->
-            <groupId>shell</groupId>
-            <artifactId>command-launcher</artifactId>
-            <version>${shell.commands.library.version}</version>
+            <groupId>net.sf.sevenzipjbinding</groupId>
+            <artifactId>sevenzipjbinding</artifactId>
+            <version>${sevenzip.jbinding.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.sevenzipjbinding</groupId>
+            <artifactId>sevenzipjbinding-all-platforms</artifactId>
+            <version>${sevenzip.jbinding.version}</version>
         </dependency>
         <!-- Test dependencies -->
         <dependency>

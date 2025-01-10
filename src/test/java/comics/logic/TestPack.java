@@ -2,11 +2,11 @@ package comics.logic;
 
 import comics.commands.PackCommand;
 import comics.commands.UnpackCommand;
-import comics.utils.Tools.TestLevel;
+import comics.utils.Tools.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import shell.OSDetection;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -17,15 +17,11 @@ import java.util.List;
 import static comics.logic.CompressionService.DEFAULT_FILE_EXCLUSIONS;
 import static comics.utils.Tools.TestLevel.COMMAND;
 import static comics.utils.Tools.TestLevel.SERVICE;
-import static comics.utils.Tools.createNewFile;
-import static comics.utils.Tools.md5;
-import static comics.utils.Tools.mkdir;
-import static comics.utils.Tools.sandbox;
+import static comics.utils.Tools.*;
 import static comics.utils.Utils.emptyIfNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.condition.OS.LINUX;
+import static org.junit.jupiter.api.condition.OS.MAC;
 
 public class TestPack {
 
@@ -184,11 +180,19 @@ public class TestPack {
             var realFile = new File(sandbox, "realFile");
             createNewFile(realFile);
             assertThrows(CompressionException.class, () -> service.compressComic(realFile, false));
-            if (!OSDetection.isWindows()) {
-                var symlink = new File(sandbox, "symlink");
-                Files.createSymbolicLink(symlink.toPath(), realFile.toPath());
-                assertThrows(CompressionException.class, () -> service.compressComic(symlink, false));
-            }
+        });
+    }
+
+    @Test
+    @EnabledOnOs( { LINUX, MAC })
+    public void testServiceErrorsSymlinks() {
+        var sb = sandbox();
+        sb.runTest((File sandbox) -> {
+            var service = new CompressionService();
+            var realFile = new File(sandbox, "realFile");
+            var symlink = new File(sandbox, "symlink");
+            Files.createSymbolicLink(symlink.toPath(), realFile.toPath());
+            assertThrows(CompressionException.class, () -> service.compressComic(symlink, false));
         });
     }
 
