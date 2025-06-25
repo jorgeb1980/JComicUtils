@@ -118,7 +118,7 @@ public class PdfService {
     public static byte[] toByteArray(RenderedImage bi, String format)
         throws IOException {
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        var baos = new ByteArrayOutputStream();
         ImageIO.write(bi, format, baos);
         return baos.toByteArray();
 
@@ -141,7 +141,7 @@ public class PdfService {
         Counter counter
     ) throws IOException {
         for (var xObjectName : resources.getXObjectNames()) {
-            PDXObject xObject = resources.getXObject(xObjectName);
+            var xObject = resources.getXObject(xObjectName);
 
             if (xObject instanceof PDFormXObject)
                 dumpImagesFromResources(

@@ -5,12 +5,14 @@ import cli.annotations.Parameter;
 import cli.annotations.Run;
 import comics.logic.CompressionService;
 import comics.logic.PdfService;
+import lombok.Setter;
 
 import java.nio.file.Path;
 
 import static comics.logic.CompressionService.DEFAULT_FILE_EXCLUSIONS;
 import static comics.utils.Utils.commonChecks;
 
+@Setter
 @Command(
     command="pdf2cbz",
     description="Translates every pdf under CWD into a .cbz file",
@@ -23,11 +25,9 @@ public class Pdf2CbzCommand {
 
     @Parameter(name = "f", longName = "format", description = "Image format to be used during conversion")
     private String format = DEFAULT_FORMAT;
-    public void setFormat(String format) { this.format = format; }
 
     @Parameter(name="npb", longName="no-progress-bar", description="If set, the command will display no progress bar")
     public Boolean disableProgressBar = false;
-    public void setDisableProgressBar(Boolean disable) { disableProgressBar = disable; }
 
     @Run
     public int run(Path cwd) throws Exception {
