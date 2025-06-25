@@ -81,7 +81,7 @@ enum SevenZipBindingService implements CompressionTool {
         private final File targetDirectory;
 
         private File prepareTarget(File root, String path) {
-            File targetFile = new File(root, path);
+            var targetFile = new File(root, path);
             try {
                 targetFile.getParentFile().mkdirs();
                 targetFile.createNewFile();
