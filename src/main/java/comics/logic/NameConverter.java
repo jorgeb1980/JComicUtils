@@ -1,14 +1,15 @@
 package comics.logic;
 
-import org.apache.commons.lang.StringUtils;
-
 import java.util.Arrays;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.regex.Pattern.compile;
 
 public class NameConverter {
+
+    private static final Pattern PATTERN = Pattern.compile("^.");
 
     private String replaceNumbers(String baseValue, String patternString, String replacementString) {
         var pattern = compile(patternString);
@@ -24,6 +25,10 @@ public class NameConverter {
             if (matcher.find()) ret = matcher.replaceFirst("- " + matcher.group(1));
         }
         return ret;
+    }
+
+    private static String capitalize(String string) {
+        return PATTERN.matcher(string).replaceFirst(m -> m.group().toUpperCase());
     }
 
     public String normalizeFileName(String fileName) {
@@ -42,7 +47,7 @@ public class NameConverter {
         name = name.toLowerCase();
         name = Arrays.stream(name.replaceAll("\\.", " ").split("\\s+"))
             // Quite unintended - however lib-cli-base brings it
-            .map(StringUtils::capitalize)
+            .map(NameConverter::capitalize)
             .collect(Collectors.joining(" ")).trim();
         // Deal with numbers
         // Is this a collection with a limited length (like in: each item has 'X of Y' at the end of the file name)?
