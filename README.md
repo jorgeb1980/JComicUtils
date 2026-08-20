@@ -14,12 +14,12 @@ Every script will remove brackets in the file names and, if present, text files 
 
 We need the following software (Linux instructions for Debian-like distros, please look for equivalents with your favorite package manager):
 
-### Java 21
+### Java 25
 
 Get it for:
-+ Windows: https://adoptopenjdk.net/
-+ Linux: `sudo apt-get install openjdk-21-jdk`
-+ MacOS: `brew install openjdk@21`
++ Windows: https://adoptium.net/
++ Linux: `sudo apt-get install openjdk-25-jdk`
++ MacOS: `brew install openjdk@25`
 
 ### Maven
 
