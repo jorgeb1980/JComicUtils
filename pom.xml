@@ -8,10 +8,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <cli.library.version>1.12.0-SNAPSHOT</cli.library.version>
-        <shell.commands.library.version>1.7.1</shell.commands.library.version>
+        <shell.commands.library.version>1.9.0</shell.commands.library.version>
         <java.compiler.version>25</java.compiler.version>
         <sevenzip.jbinding.version>16.02-2.01</sevenzip.jbinding.version>
-        <test.library.revision>2.0.0</test.library.revision>
+        <test.library.revision>2.1.0</test.library.revision>
         <lombok.version>1.18.40</lombok.version>
     </properties>
     <build>
