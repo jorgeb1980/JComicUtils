@@ -14,7 +14,13 @@ import static comics.logic.CompressionService.DEFAULT_FILE_EXCLUSIONS;
 import static comics.utils.Utils.commonChecks;
 
 @Setter
-@Command(command="pack", description="Packs every sub-directory under CWD into a .cbz file")
+@Command(
+        command="pack",
+        description="Packs every sub-directory under CWD into a .cbz file",
+        // Kind of ham-fisted - prevents warnings of restricted access by jline3 by reverting to the free-for-all native access
+        // Not great options provided in the library https://github.com/jline/jline3/issues/1067
+        jvmArgs = "--enable-native-access=ALL-UNNAMED"
+)
 public class PackCommand {
 
     @Parameter(name="a", longName="all", description="If set, the command will include non-image files in the comics")

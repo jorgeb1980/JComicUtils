@@ -123,7 +123,7 @@
         <dependency>
             <groupId>me.tongfei</groupId>
             <artifactId>progressbar</artifactId>
-            <version>0.10.1</version>
+            <version>0.10.2</version>
         </dependency>
         <!-- https://github.com/jorgeb1980/lib-cli-base -->
         <dependency>
@@ -164,5 +164,20 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <!-- Try and force a recent version of these 2 in order to remove the restricted method in System warning -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jline</groupId>
+                <artifactId>jline-native</artifactId>
+                <version>4.3.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jline</groupId>
+                <artifactId>jline-terminal</artifactId>
+                <version>4.3.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
 </project>

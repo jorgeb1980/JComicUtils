@@ -16,8 +16,8 @@ import static comics.utils.Utils.commonChecks;
 @Command(
     command="pdf2cbz",
     description="Translates every pdf under CWD into a .cbz file",
-    // May need a considerable heap for PDF collections
-    jvmArgs="-Xmx35G"
+    // May need a considerable heap for PDF collections - also, jline hack
+    jvmArgs="-Xmx35G --enable-native-access=ALL-UNNAMED"
 )
 public class Pdf2CbzCommand {
 
