@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>comics</groupId>
     <artifactId>jcomicsutils</artifactId>
-    <version>2.2.0-SNAPSHOT</version>
+    <version>2.2.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -164,20 +164,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <!-- Try and force a recent version of these 2 in order to remove the restricted method in System warning -->
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.jline</groupId>
-                <artifactId>jline-native</artifactId>
-                <version>4.3.1</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jline</groupId>
-                <artifactId>jline-terminal</artifactId>
-                <version>4.3.1</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
 </project>
